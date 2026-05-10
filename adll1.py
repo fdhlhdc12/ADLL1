@@ -40,7 +40,7 @@ if not os.path.exists("users-details-2023.csv"):
 def load_data():
 
     df_anime = pd.read_csv(
-        'anime-dataset-2023-clean.csv'
+        'anime-dataset-2023.csv'
     )
 
     df_user = pd.read_csv(
@@ -48,7 +48,7 @@ def load_data():
     )
 
     df_score = pd.read_csv(
-        'users-score-small30000.csv'
+        'users-score-small.csv'
     )
 
     return df_anime, df_user, df_score
