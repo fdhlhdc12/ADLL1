@@ -21,19 +21,6 @@ st.title("🎌 Anime Analytics Dashboard")
 st.markdown("Dashboard Analisis Anime 2023")
 
 # =====================================
-# DOWNLOAD USERS DETAILS
-# =====================================
-if not os.path.exists("users-details-2023.csv"):
-
-    url = "https://drive.google.com/uc?id=1XQ_m3aZ34ogv5CjOA3UFLPHJ9S_RtQvc"
-
-    gdown.download(
-        url,
-        "users-details-2023.csv",
-        quiet=False
-    )
-
-# =====================================
 # LOAD DATA
 # =====================================
 @st.cache_data
@@ -43,16 +30,11 @@ def load_data():
         'anime-dataset-2023.csv'
     )
 
-    df_user = pd.read_csv(
-        'users-details-2023.csv'
-    )
-
     df_score = pd.read_csv(
         'users-score-small.csv'
     )
 
     return df_anime, df_user, df_score
-
 
 df_anime, df_user, df_score = load_data()
 
