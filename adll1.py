@@ -34,9 +34,9 @@ def load_data():
         'users-score-small.csv'
     )
 
-    return df_anime, df_user, df_score
+    return df_anime, df_score
 
-df_anime, df_user, df_score = load_data()
+df_anime, df_score = load_data()
 
 # =====================================
 # CLEAN SCORE
