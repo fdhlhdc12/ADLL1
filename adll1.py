@@ -6,7 +6,8 @@ from wordcloud import WordCloud
 import matplotlib.pyplot as plt
 from datetime import datetime
 from sklearn.metrics.pairwise import cosine_similarity
-from pathlib import Path
+import gdown
+import os
 
 # =====================================
 # CONFIG
@@ -20,18 +21,40 @@ st.title("🎌 Anime Analytics Dashboard")
 st.markdown("Dashboard Analisis Anime 2023")
 
 # =====================================
+# DOWNLOAD USERS DETAILS
+# =====================================
+if not os.path.exists("users-details-2023.csv"):
+
+    url = "https://drive.google.com/uc?id=1XQ_m3aZ34ogv5CjOA3UFLPHJ9S_RtQvc"
+
+    gdown.download(
+        url,
+        "users-details-2023.csv",
+        quiet=False
+    )
+
+# =====================================
 # LOAD DATA
 # =====================================
 @st.cache_data
 def load_data():
-    base_path = Path(__file__).parent
-    
-    df_anime = pd.read_csv(base_path / 'anime-dataset-2023.csv')
-    df_score = pd.read_csv(base_path / 'users-score-small.csv')
-    
-    return df_anime, df_score
 
-df_anime, df_score = load_data()
+    df_anime = pd.read_csv(
+        'anime-dataset-2023-clean.csv'
+    )
+
+    df_user = pd.read_csv(
+        'users-details-2023.csv'
+    )
+
+    df_score = pd.read_csv(
+        'users-score-small30000.csv'
+    )
+
+    return df_anime, df_user, df_score
+
+
+df_anime, df_user, df_score = load_data()
 
 # =====================================
 # CLEAN SCORE
@@ -63,6 +86,23 @@ rating_data = df_score[
     ['user_id', 'anime_id', 'rating']
 ]
 
+# HITUNG JUMLAH RATING PER ANIME
+anime_rating_count = rating_data[
+    'anime_id'
+].value_counts()
+
+# AMBIL ANIME YANG PUNYA >= 20 RATING
+popular_anime = anime_rating_count[
+    anime_rating_count >= 20
+].index
+
+# FILTER DATA
+rating_data = rating_data[
+    rating_data['anime_id'].isin(
+        popular_anime
+    )
+]
+
 anime_pivot = rating_data.pivot_table(
     index='anime_id',
     columns='user_id',
@@ -89,6 +129,7 @@ menu = st.sidebar.selectbox(
     [
         "Overview",
         "Anime Analysis",
+        "User Analysis",
         "Recommendation System"
     ]
 )
@@ -107,10 +148,9 @@ if menu == "Overview":
         len(df_anime)
     )
 
-    # Hitung user unik dari df_score
     col2.metric(
         "Jumlah User",
-        df_score['user_id'].nunique()
+        len(df_user)
     )
 
     col3.metric(
@@ -238,6 +278,90 @@ elif menu == "Anime Analysis":
     ax.axis('off')
 
     st.pyplot(fig_wc)
+
+# =====================================
+# USER ANALYSIS
+# =====================================
+elif menu == "User Analysis":
+
+    st.subheader("User Analysis")
+
+    # GENDER
+    gender_counts = df_user[
+        'Gender'
+    ].value_counts(dropna=True)
+
+    fig = px.pie(
+        values=gender_counts.values,
+        names=gender_counts.index,
+        title='Gender Distribution'
+    )
+
+    st.plotly_chart(
+        fig,
+        use_container_width=True
+    )
+
+    # LOCATION
+    st.write("## Top 20 User Locations")
+
+    location_counts = df_user[
+        'Location'
+    ].value_counts().head(20)
+
+    fig = px.bar(
+        location_counts,
+        x=location_counts.index,
+        y=location_counts.values,
+        color=location_counts.index
+    )
+
+    st.plotly_chart(
+        fig,
+        use_container_width=True
+    )
+
+    # AGE
+    st.write("## Age Distribution")
+
+    def calculate_age(birth_date):
+
+        if birth_date != 'NaN':
+
+            try:
+
+                birth_year = int(
+                    birth_date.split('-')[0]
+                )
+
+                today_year = datetime.utcnow().year
+
+                age = today_year - birth_year
+
+                if age >= 10 and age < 60:
+
+                    return age
+
+            except:
+
+                return None
+
+        return None
+
+    Age = df_user[
+        'Birthday'
+    ].dropna().apply(calculate_age)
+
+    fig = px.histogram(
+        Age,
+        nbins=20,
+        title='Age Distribution'
+    )
+
+    st.plotly_chart(
+        fig,
+        use_container_width=True
+    )
 
 # =====================================
 # RECOMMENDATION SYSTEM
