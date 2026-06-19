@@ -774,17 +774,26 @@ show_topnav()
 # HERO FUNCTION
 # ==========================================================
 
-def show_banner(title, subtitle, description="", welcome=None):
+def show_banner(title, subtitle, description="", welcome=None, small=False):
     welcome_html = f'<div class="hero-welcome">{welcome}</div>' if welcome else ""
     desc_html = f'<div class="hero-desc">{description}</div>' if description else ""
+    height = 130 if small else 280
+    title_size = "30px" if small else "42px"
+    overlay_bg = (
+        "linear-gradient(100deg, rgba(10,10,20,0.55) 0%, rgba(10,10,20,0.3) 50%, rgba(10,10,20,0.1) 100%)"
+        if small else
+        "linear-gradient(100deg, rgba(10,10,20,0.78) 0%, rgba(10,10,20,0.45) 45%, rgba(10,10,20,0.15) 100%)"
+    )
+    fallback_bg = "linear-gradient(120deg,#1e1b4b,#4c1d95,#831843)"
+
     if BG_IMAGE:
         st.markdown(
         f"""
-        <div class="hero-container">
-            <img src="data:image/jpeg;base64,{BG_IMAGE}">
-            <div class="hero-overlay">
+        <div class="hero-container" style="height:{height}px;">
+            <img src="data:image/jpeg;base64,{BG_IMAGE}" style="height:{height}px;">
+            <div class="hero-overlay" style="background:{overlay_bg};">
                 {welcome_html}
-                <div class="hero-title">{title}</div>
+                <div class="hero-title" style="font-size:{title_size};">{title}</div>
                 <div class="hero-subtitle">{subtitle}</div>
                 {desc_html}
             </div>
@@ -794,10 +803,10 @@ def show_banner(title, subtitle, description="", welcome=None):
         )
     else:
         st.markdown(f"""
-        <div class="hero-container" style="background:linear-gradient(120deg,#1e1b4b,#4c1d95,#831843); display:flex; align-items:center; padding-left:48px;">
+        <div class="hero-container" style="height:{height}px; background:{fallback_bg}; display:flex; align-items:center; padding-left:48px;">
             <div>
                 {welcome_html}
-                <div class="hero-title">{title}</div>
+                <div class="hero-title" style="font-size:{title_size};">{title}</div>
                 <div class="hero-subtitle">{subtitle}</div>
                 {desc_html}
             </div>
@@ -854,12 +863,19 @@ if page == "Overview":
 
     csearch1, csearch2 = st.columns([5,1])
     with csearch1:
-        search_query = st.text_input("🔍 Search Anime", placeholder="Search anime, genre, studio, or keyword...", label_visibility="collapsed")
+        anime_name_list = sorted(df_anime["Name"].dropna().unique())
+        search_query = st.selectbox(
+            "🔍 Search Anime",
+            options=anime_name_list,
+            index=None,
+            placeholder="Search anime by name...",
+            label_visibility="collapsed",
+        )
     with csearch2:
         do_search = st.button("Search", use_container_width=True, type="primary")
 
     if search_query:
-        result = df_anime[df_anime["Name"].str.contains(search_query, case=False, na=False)]
+        result = df_anime[df_anime["Name"] == search_query]
         if len(result) > 0:
             st.dataframe(result[["Name", "Genres", "Score", "Type"]].head(20), use_container_width=True)
         else:
@@ -984,8 +1000,7 @@ if page == "Overview":
 # ==========================================================
 
 elif page == "Analytics":
-    st.markdown('<div class="page-title">Analytics</div>', unsafe_allow_html=True)
-    st.markdown('<div class="page-subtitle">Discover meaningful insights from anime data</div>', unsafe_allow_html=True)
+    show_banner("Analytics", "Discover meaningful insights from anime data", small=True)
 
     total_anime = len(df_anime)
     avg_score = round(df_anime["Score"].mean(), 2)
@@ -1099,10 +1114,16 @@ elif page == "Analytics":
 # ==========================================================
 
 elif page == "Anime Explorer":
-    st.markdown('<div class="page-title">Anime Explorer 🌐</div>', unsafe_allow_html=True)
-    st.markdown('<div class="page-subtitle">Discover and explore anime from our comprehensive database</div>', unsafe_allow_html=True)
+    show_banner("Anime Explorer 🌐", "Discover and explore anime from our comprehensive database", small=True)
 
-    search = st.text_input("🔍 Search Anime", placeholder="Search anime by name, genre, studio...", label_visibility="collapsed")
+    anime_name_list_explorer = sorted(df_anime["Name"].dropna().unique())
+    search = st.selectbox(
+        "🔍 Search Anime",
+        options=anime_name_list_explorer,
+        index=None,
+        placeholder="Search anime by name...",
+        label_visibility="collapsed",
+    )
 
     c1,c2,c3,c4 = st.columns(4)
     with c1:
@@ -1118,7 +1139,7 @@ elif page == "Anime Explorer":
 
     filtered = df_anime.copy()
     if search:
-        filtered = filtered[filtered["Name"].str.contains(search, case=False, na=False)]
+        filtered = filtered[filtered["Name"] == search]
     if selected_genre != "All Genres":
         filtered = filtered[filtered["Genres"].str.contains(selected_genre, na=False)]
     if selected_type != "All Types":
@@ -1188,8 +1209,7 @@ elif page == "Anime Explorer":
 # ==========================================================
 
 elif page == "User Analytics":
-    st.markdown('<div class="page-title">User Analytics 👥</div>', unsafe_allow_html=True)
-    st.markdown('<div class="page-subtitle">Deep insights into user behavior and preferences</div>', unsafe_allow_html=True)
+    show_banner("User Analytics 👥", "Deep insights into user behavior and preferences", small=True)
 
     total_users = len(df_user)
     total_country = df_user["Location"].dropna().nunique() if "Location" in df_user.columns else 0
@@ -1268,8 +1288,7 @@ elif page == "User Analytics":
 # ==========================================================
 
 elif page == "Recommendations":
-    st.markdown('<div class="page-title">Recommendations 🎯</div>', unsafe_allow_html=True)
-    st.markdown('<div class="page-subtitle">Personalized anime recommendations just for you</div>', unsafe_allow_html=True)
+    show_banner("Recommendations 🎯", "Personalized anime recommendations just for you", small=True)
 
     with st.expander("ℹ️ How it works"):
         st.write("We analyze rating patterns across users to find anime with similar audiences, then rank them by cosine similarity to the anime you select.")
@@ -1345,8 +1364,7 @@ elif page == "Recommendations":
 # ==========================================================
 
 elif page == "AI Insights":
-    st.markdown('<div class="page-title">AI Insights 🧠</div>', unsafe_allow_html=True)
-    st.markdown('<div class="page-subtitle">AI-powered insights and analysis from anime data</div>', unsafe_allow_html=True)
+    show_banner("AI Insights 🧠", "AI-powered insights and analysis from anime data", small=True)
 
     top_genre = df_anime["Genres"].dropna().str.split(", ").explode().value_counts().idxmax()
     top_genre_pct = round(df_anime["Genres"].dropna().str.split(", ").explode().value_counts(normalize=True).max()*100, 1)
@@ -1435,8 +1453,7 @@ elif page == "AI Insights":
 # ==========================================================
 
 elif page == "Favorites":
-    st.markdown('<div class="page-title">Favorites ❤️</div>', unsafe_allow_html=True)
-    st.markdown('<div class="page-subtitle">Anime you have saved for later</div>', unsafe_allow_html=True)
+    show_banner("Favorites ❤️", "Anime you have saved for later", small=True)
 
     fav_ids = st.session_state.favorites
     if not fav_ids:
@@ -1475,8 +1492,7 @@ elif page == "Favorites":
 # ==========================================================
 
 elif page == "Settings":
-    st.markdown('<div class="page-title">⚙️ Settings</div>', unsafe_allow_html=True)
-    st.markdown('<div class="page-subtitle">Customize your dashboard experience</div>', unsafe_allow_html=True)
+    show_banner("⚙️ Settings", "Customize your dashboard experience", small=True)
 
     st.markdown('<div class="section-title">🎨 Appearance</div>', unsafe_allow_html=True)
     a1,a2,a3 = st.columns(3)
