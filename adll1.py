@@ -1,6 +1,6 @@
 # ==========================================================
 # ANIME INSIGHT AI
-# Full Dashboard - Streamlit (with Dark/Light Toggle)
+# Full Dashboard - Streamlit (with fixed navbar)
 # ==========================================================
 
 # ==========================================================
@@ -12,14 +12,8 @@ import pandas as pd
 import numpy as np
 import plotly.express as px
 import plotly.graph_objects as go
-
-from wordcloud import WordCloud
-import matplotlib.pyplot as plt
-
 from datetime import datetime
 from sklearn.metrics.pairwise import cosine_similarity
-
-import random
 import os
 import base64
 import gdown
@@ -46,7 +40,7 @@ if "favorites" not in st.session_state:
     st.session_state.favorites = set()
 
 if "dark_mode" not in st.session_state:
-    st.session_state.dark_mode = True   # default dark
+    st.session_state.dark_mode = True
 
 PAGES = [
     "Overview",
@@ -81,9 +75,7 @@ def get_base64(file_path):
     except Exception:
         return ""
 
-
 def fmt_num(n):
-    """Format big numbers like 7200000 -> 7.2M, 145200 -> 145.2K"""
     try:
         n = float(n)
     except (TypeError, ValueError):
@@ -104,15 +96,10 @@ def load_data():
         with st.spinner("Downloading dataset..."):
             url = "https://drive.google.com/uc?id=1XQ_m3aZ34ogv5CjOA3UFLPHJ9S_RtQvc"
             gdown.download(url, "users-details-2023.csv", quiet=True)
-
     df_anime = pd.read_csv("anime-dataset-2023.csv")
     df_user = pd.read_csv("users-details-2023.csv")
     df_score = pd.read_csv("users-score-small.csv")
     return df_anime, df_user, df_score
-
-# ==========================================================
-# BUILD SIMILARITY
-# ==========================================================
 
 @st.cache_data
 def build_similarity(df_score, df_anime):
@@ -125,19 +112,13 @@ def build_similarity(df_score, df_anime):
     similarity_df = pd.DataFrame(similarity, index=pivot.index, columns=pivot.index)
     return similarity_df
 
-# ==========================================================
-# LOAD DATASET
-# ==========================================================
-
 with st.spinner("Loading Anime Database..."):
     df_anime, df_user, df_score = load_data()
 
-# Clean Score
 scores = df_anime[df_anime["Score"] != "UNKNOWN"]["Score"].astype(float)
 mean_score = round(scores.mean(), 2)
 df_anime["Score"] = df_anime["Score"].replace("UNKNOWN", mean_score).astype(float)
 
-# Build similarity
 with st.spinner("Building Recommendation Engine..."):
     similarity_df = build_similarity(df_score, df_anime)
 
@@ -167,549 +148,118 @@ for ext in ["jpg", "jpeg", "png", "webp"]:
         break
 
 # ==========================================================
-# GLOBAL CSS (static)
+# GLOBAL CSS
 # ==========================================================
 
-st.markdown(
-f"""
+st.markdown("""
 <style>
-
-/* =====================================================
-IMPORT FONT
-===================================================== */
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
+html, body, [class*="css"] { font-family: 'Inter', sans-serif; }
+.stApp { background: linear-gradient(180deg, #0f172a 0%, #111827 50%, #0b1120 100%); color:white; }
+#MainMenu {visibility: hidden;}
+footer {visibility: hidden;}
+header[data-testid="stHeader"] { background: transparent; }
+.block-container { padding-top: 1.5rem; padding-bottom: 2rem; }
 
-html, body, [class*="css"] {{
-    font-family: 'Inter', sans-serif;
-}}
-
-/* =====================================================
-MAIN APP
-===================================================== */
-
-.stApp {{
-    background:
-    linear-gradient(
-        180deg,
-        #0f172a 0%,
-        #111827 50%,
-        #0b1120 100%
-    );
-    color:white;
-}}
-
-#MainMenu {{visibility: hidden;}}
-footer {{visibility: hidden;}}
-header[data-testid="stHeader"] {{
-    background: transparent;
-}}
-
-.block-container {{
-    padding-top: 1.5rem;
-    padding-bottom: 2rem;
-}}
-
-/* =====================================================
-TOP NAVBAR
-===================================================== */
-
-.topnav {{
-    display:flex;
-    justify-content:flex-end;
-    align-items:center;
-    gap:18px;
-    padding:6px 4px 18px 4px;
-    margin-bottom: 4px;
-}}
-
-.topnav-icon {{
-    width:40px;
-    height:40px;
-    border-radius:50%;
-    background:rgba(255,255,255,0.06);
-    border:1px solid rgba(255,255,255,0.08);
-    display:flex;
-    align-items:center;
-    justify-content:center;
-    font-size:17px;
-    position:relative;
-    color:#e2e8f0;
-}}
-
-.topnav-badge {{
-    position:absolute;
-    top:-4px;
-    right:-4px;
-    background:#ef4444;
-    color:white;
-    font-size:10px;
-    font-weight:700;
-    border-radius:50%;
-    width:18px;
-    height:18px;
-    display:flex;
-    align-items:center;
-    justify-content:center;
-    border:2px solid #0f172a;
-}}
-
-.topnav-user {{
-    display:flex;
-    align-items:center;
-    gap:10px;
-    background:rgba(255,255,255,0.04);
-    border:1px solid rgba(255,255,255,0.08);
-    padding:6px 14px 6px 6px;
-    border-radius:999px;
-}}
-
-.topnav-avatar {{
-    width:32px;
-    height:32px;
-    border-radius:50%;
-    background:linear-gradient(135deg,#7c3aed,#ec4899);
-    display:flex;
-    align-items:center;
-    justify-content:center;
-    font-size:16px;
-    overflow:hidden;
-}}
-
-.topnav-avatar img {{
-    width:100%;
-    height:100%;
-    object-fit:cover;
-}}
-
-.topnav-username {{
-    font-size:14px;
-    font-weight:600;
-    color:white;
-}}
-
-.topnav-userrole {{
-    font-size:11px;
-    color:#a78bfa;
-}}
-
-/* =====================================================
-SIDEBAR
-===================================================== */
-
-[data-testid="stSidebar"] {{
-    background:
-    linear-gradient(
-        180deg,
-        #111827,
-        #0f172a
-    );
-    border-right:
-    1px solid rgba(
-        255,
-        255,
-        255,
-        0.05
-    );
-}}
-
-.sidebar-logo-row {{
-    display:flex;
-    align-items:center;
-    gap:10px;
-    justify-content:center;
-    margin-bottom:2px;
-}}
-
-.sidebar-logo-icon {{
-    font-size:26px;
-    background: linear-gradient(135deg, #a855f7, #ec4899);
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-}}
-
-.sidebar-title {{
-    font-size:28px;               /* diperbesar */
-    font-weight:800;
+/* Sidebar */
+[data-testid="stSidebar"] {
+    background: linear-gradient(180deg, #111827, #0f172a);
+    border-right: 1px solid rgba(255,255,255,0.05);
+}
+.sidebar-logo-row { display:flex; align-items:center; gap:10px; justify-content:center; margin-bottom:2px; }
+.sidebar-logo-icon { font-size:26px; background: linear-gradient(135deg, #a855f7, #ec4899); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+.sidebar-title {
+    font-size:28px; font-weight:800;
     background: linear-gradient(135deg, #c084fc, #f472b6);
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    text-align:center;
-    margin-bottom:0;
-    line-height:1.1;
-}}
+    -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+    text-align:center; margin-bottom:0; line-height:1.1;
+}
+.sidebar-subtitle { color:#94a3b8; text-align:center; margin-bottom:18px; font-size:12px; letter-spacing:1px; }
+.sidebar-footer { text-align:center; color:#94a3b8; font-size:13px; margin-top:20px; }
+.sidebar-quote { text-align:center; color:#cbd5e1; font-size:13px; margin-top:30px; line-height:1.6; }
+.sidebar-quote .jp { color:#f472b6; font-size:12px; display:block; margin-top:4px; }
 
-.sidebar-subtitle {{
-    color:#94a3b8;
-    text-align:center;
-    margin-bottom:18px;
-    font-size:12px;
-    letter-spacing: 1px;
-}}
+[data-testid="stSidebar"] .stRadio > label { display:none; }
+[data-testid="stSidebar"] [role="radiogroup"] { gap: 4px; }
+[data-testid="stSidebar"] [role="radiogroup"] label {
+    background: transparent; border-radius: 10px; padding: 10px 14px !important;
+    width: 100%; transition: 0.2s; font-weight: 500;
+}
+[data-testid="stSidebar"] [role="radiogroup"] label:hover { background: rgba(255,255,255,0.06); }
 
-.sidebar-footer {{
-    text-align:center;
-    color:#94a3b8;
-    font-size:13px;
-    margin-top:20px;
-}}
+/* Glass card */
+.glass-card {
+    background: rgba(255,255,255,0.05);
+    backdrop-filter: blur(20px);
+    border: 1px solid rgba(255,255,255,0.08);
+    border-radius:20px; padding:20px; margin-bottom:20px;
+}
+.glass-card h3 { margin-top:0; font-size:16px; }
 
-.sidebar-quote {{
-    text-align:center;
-    color:#cbd5e1;
-    font-size:13px;
-    margin-top:30px;
-    line-height:1.6;
-}}
-
-.sidebar-quote .jp {{
-    color:#f472b6;
-    font-size:12px;
-    display:block;
-    margin-top:4px;
-}}
-
-/* Radio buttons styled as nav menu */
-[data-testid="stSidebar"] .stRadio > label {{
-    display:none;
-}}
-
-[data-testid="stSidebar"] [role="radiogroup"] {{
-    gap: 4px;
-}}
-
-[data-testid="stSidebar"] [role="radiogroup"] label {{
-    background: transparent;
-    border-radius: 10px;
-    padding: 10px 14px !important;
-    width: 100%;
-    transition: 0.2s;
-    font-weight: 500;
-}}
-
-[data-testid="stSidebar"] [role="radiogroup"] label:hover {{
-    background: rgba(255,255,255,0.06);
-}}
-
-/* =====================================================
-GLASS CARD
-===================================================== */
-
-.glass-card {{
-    background:
-    rgba(
-        255,
-        255,
-        255,
-        0.05
-    );
-    backdrop-filter:
-    blur(20px);
-    border:
-    1px solid rgba(
-        255,
-        255,
-        255,
-        0.08
-    );
-    border-radius:20px;
-    padding:20px;
-    margin-bottom:20px;
-}}
-
-.glass-card h3 {{
-    margin-top:0;
-    font-size:16px;
-}}
-
-/* =====================================================
-KPI CARD
-===================================================== */
-
-.kpi-card {{
+/* KPI card */
+.kpi-card {
     background: #131c31;
     border: 1px solid rgba(255,255,255,0.06);
-    border-radius:16px;
-    padding:18px 18px;
-    height: 100%;
-}}
+    border-radius:16px; padding:18px; height:100%;
+}
+.kpi-top-row { display:flex; align-items:center; gap:12px; margin-bottom:10px; }
+.kpi-icon { width:38px; height:38px; border-radius:12px; display:flex; align-items:center; justify-content:center; font-size:18px; flex-shrink:0; }
+.kpi-label { color:#94a3b8; font-size:13.5px; font-weight:500; }
+.kpi-value { font-size:28px; font-weight:800; color:white; line-height:1.1; margin-bottom:4px; }
+.kpi-delta { font-size:12.5px; font-weight:600; }
+.kpi-delta.up { color:#4ade80; }
+.kpi-delta.down { color:#f87171; }
+.kpi-delta.flat { color:#94a3b8; }
 
-.kpi-top-row {{
-    display:flex;
-    align-items:center;
-    gap:12px;
-    margin-bottom:10px;
-}}
+/* Section titles */
+.section-title { font-size:22px; font-weight:700; color:white; margin-top:8px; margin-bottom:15px; display:flex; align-items:center; gap:8px; }
+.page-title { font-size:38px; font-weight:800; color:white; margin-bottom:2px; }
+.page-subtitle { color:#94a3b8; font-size:15px; margin-bottom:18px; }
 
-.kpi-icon {{
-    width:38px;
-    height:38px;
-    border-radius:12px;
-    display:flex;
-    align-items:center;
-    justify-content:center;
-    font-size:18px;
-    flex-shrink:0;
-}}
+/* Hero */
+.hero-container { position:relative; overflow:hidden; border-radius:22px; height:280px; margin-bottom:26px; }
+.hero-container img { width:100%; height:280px; object-fit:cover; }
+.hero-overlay {
+    position:absolute; top:0; left:0; width:100%; height:100%;
+    background: linear-gradient(100deg, rgba(10,10,20,0.78) 0%, rgba(10,10,20,0.45) 45%, rgba(10,10,20,0.15) 100%);
+    display:flex; flex-direction:column; justify-content:center; padding-left:48px;
+}
+.hero-welcome { color:#f472b6; font-weight:600; font-size:15px; margin-bottom:6px; }
+.hero-title { font-size:42px; font-weight:800; color:white; line-height:1.1; }
+.hero-subtitle { color:#e2e8f0; font-size:17px; margin-top:6px; }
+.hero-desc { color:#cbd5e1; font-size:13.5px; margin-top:10px; max-width:480px; }
 
-.kpi-label {{
-    color:#94a3b8;
-    font-size:13.5px;
-    font-weight:500;
-}}
+/* Poster card */
+.poster-card { background: rgba(255,255,255,0.05); border-radius:16px; padding:8px; transition:0.3s; position:relative; }
+.poster-card:hover { transform: translateY(-5px); }
+.poster-rank-badge {
+    position:absolute; top:14px; left:14px; background:#f59e0b; color:#111;
+    font-weight:800; font-size:12px; width:24px; height:24px; border-radius:50%;
+    display:flex; align-items:center; justify-content:center; z-index:2;
+}
+.poster-title { font-weight:700; font-size:14px; color:white; margin-top:8px; margin-bottom:2px; }
+.poster-score { color:#fbbf24; font-size:13px; font-weight:600; }
+.genre-chip {
+    display:inline-block; background:rgba(124,58,237,0.18); color:#c4b5fd;
+    font-size:11px; padding:2px 9px; border-radius:7px; margin:2px 3px 0 0;
+}
+.sim-text { color:#4ade80; font-size:12.5px; font-weight:600; margin-top:6px; }
 
-.kpi-value {{
-    font-size:28px;
-    font-weight:800;
-    color:white;
-    line-height:1.1;
-    margin-bottom: 4px;
-}}
-
-.kpi-delta {{
-    font-size:12.5px;
-    font-weight:600;
-}}
-
-.kpi-delta.up {{ color:#4ade80; }}
-.kpi-delta.down {{ color:#f87171; }}
-.kpi-delta.flat {{ color:#94a3b8; }}
-
-/* legacy metric card kept for compatibility */
-.metric-card {{
-    background:
-    linear-gradient(
-        135deg,
-        rgba(124,58,237,0.4),
-        rgba(59,130,246,0.3)
-    );
-    padding:20px;
-    border-radius:20px;
-    text-align:center;
-    border:
-    1px solid rgba(
-        255,
-        255,
-        255,
-        0.1
-    );
-}}
-
-.metric-title {{
-    color:#cbd5e1;
-    font-size:14px;
-}}
-
-.metric-value {{
-    font-size:34px;
-    font-weight:700;
-    color:white;
-}}
-
-/* =====================================================
-SECTION TITLE
-===================================================== */
-
-.section-title {{
-    font-size:22px;
-    font-weight:700;
-    color:white;
-    margin-top:8px;
-    margin-bottom:15px;
-    display:flex;
-    align-items:center;
-    gap:8px;
-}}
-
-.page-title {{
-    font-size:38px;
-    font-weight:800;
-    color:white;
-    margin-bottom:2px;
-}}
-
-.page-subtitle {{
-    color:#94a3b8;
-    font-size:15px;
-    margin-bottom:18px;
-}}
-
-/* =====================================================
-HERO
-===================================================== */
-
-.hero-container {{
-    position:relative;
-    overflow:hidden;
-    border-radius:22px;
-    height:280px;
-    margin-bottom:26px;
-}}
-
-.hero-container img {{
-    width:100%;
-    height:280px;
-    object-fit:cover;
-}}
-
-.hero-overlay {{
-    position:absolute;
-    top:0;
-    left:0;
-    width:100%;
-    height:100%;
-    background:
-    linear-gradient(
-        100deg,
-        rgba(10,10,20,0.78) 0%,
-        rgba(10,10,20,0.45) 45%,
-        rgba(10,10,20,0.15) 100%
-    );
-    display:flex;
-    flex-direction:column;
-    justify-content:center;
-    padding-left:48px;
-}}
-
-.hero-welcome {{
-    color:#f472b6;
-    font-weight:600;
-    font-size:15px;
-    margin-bottom:6px;
-}}
-
-.hero-title {{
-    font-size:42px;
-    font-weight:800;
-    color:white;
-    line-height:1.1;
-}}
-
-.hero-subtitle {{
-    color:#e2e8f0;
-    font-size:17px;
-    margin-top:6px;
-}}
-
-.hero-desc {{
-    color:#cbd5e1;
-    font-size:13.5px;
-    margin-top:10px;
-    max-width:480px;
-}}
-
-/* =====================================================
-POSTER CARD
-===================================================== */
-
-.poster-card {{
-    background:
-    rgba(
-        255,
-        255,
-        255,
-        0.05
-    );
-    border-radius:16px;
-    padding:8px;
-    transition:0.3s;
-    position:relative;
-}}
-
-.poster-card:hover {{
-    transform:
-    translateY(-5px);
-}}
-
-.poster-rank-badge {{
-    position:absolute;
-    top:14px;
-    left:14px;
-    background:#f59e0b;
-    color:#111;
-    font-weight:800;
-    font-size:12px;
-    width:24px;
-    height:24px;
-    border-radius:50%;
-    display:flex;
-    align-items:center;
-    justify-content:center;
-    z-index:2;
-}}
-
-.poster-sim-badge {{
-    position:absolute;
-    top:14px;
-    left:14px;
-    background:#7c3aed;
-    color:white;
-    font-weight:700;
-    font-size:12px;
-    padding:2px 9px;
-    border-radius:8px;
-    z-index:2;
-}}
-
-.poster-title {{
-    font-weight:700;
-    font-size:14px;
-    color:white;
-    margin-top:8px;
-    margin-bottom:2px;
-}}
-
-.poster-score {{
-    color:#fbbf24;
-    font-size:13px;
-    font-weight:600;
-}}
-
-.genre-chip {{
-    display:inline-block;
-    background:rgba(124,58,237,0.18);
-    color:#c4b5fd;
-    font-size:11px;
-    padding:2px 9px;
-    border-radius:7px;
-    margin:2px 3px 0 0;
-}}
-
-.sim-text {{
-    color:#4ade80;
-    font-size:12.5px;
-    font-weight:600;
-    margin-top:6px;
-}}
-
-/* =====================================================
-BADGE / PILL
-===================================================== */
-
-.pill {{
-    display:inline-block;
-    padding:4px 12px;
-    border-radius:999px;
-    font-size:12.5px;
-    font-weight:600;
-    margin-right:6px;
-}}
-
-.pill-purple {{ background:rgba(124,58,237,0.25); color:#c4b5fd; }}
-.pill-pink {{ background:rgba(236,72,153,0.2); color:#f9a8d4; }}
-.pill-green {{ background:rgba(34,197,94,0.18); color:#86efac; }}
-.pill-blue {{ background:rgba(59,130,246,0.2); color:#93c5fd; }}
-.pill-orange {{ background:rgba(245,158,11,0.18); color:#fcd34d; }}
+/* Pills */
+.pill { display:inline-block; padding:4px 12px; border-radius:999px; font-size:12.5px; font-weight:600; margin-right:6px; }
+.pill-purple { background:rgba(124,58,237,0.25); color:#c4b5fd; }
+.pill-pink { background:rgba(236,72,153,0.2); color:#f9a8d4; }
+.pill-green { background:rgba(34,197,94,0.18); color:#86efac; }
+.pill-blue { background:rgba(59,130,246,0.2); color:#93c5fd; }
+.pill-orange { background:rgba(245,158,11,0.18); color:#fcd34d; }
 
 </style>
-""",
-unsafe_allow_html=True
-)
+""", unsafe_allow_html=True)
 
 # ==========================================================
-# DYNAMIC THEME CSS (overrides based on dark_mode)
+# DYNAMIC THEME CSS
 # ==========================================================
 
-# Tentukan warna berdasarkan mode
 if st.session_state.dark_mode:
     bg_main = "#0f172a"
     bg_sidebar = "#111827"
@@ -718,8 +268,6 @@ if st.session_state.dark_mode:
     kpi_bg = "#131c31"
     text_primary = "white"
     text_secondary = "#94a3b8"
-    text_hero = "white"
-    text_subhero = "#e2e8f0"
 else:
     bg_main = "#f1f5f9"
     bg_sidebar = "#e2e8f0"
@@ -728,30 +276,13 @@ else:
     kpi_bg = "#ffffff"
     text_primary = "#0f172a"
     text_secondary = "#475569"
-    text_hero = "#0f172a"
-    text_subhero = "#334155"
 
 st.markdown(f"""
 <style>
-    /* Main background */
-    .stApp {{
-        background: {bg_main} !important;
-    }}
-    [data-testid="stSidebar"] {{
-        background: {bg_sidebar} !important;
-        border-right: 1px solid rgba(0,0,0,0.05) !important;
-    }}
-    /* Cards */
-    .glass-card {{
-        background: {card_bg} !important;
-        backdrop-filter: blur(10px) !important;
-        border-color: {card_border} !important;
-    }}
-    .kpi-card {{
-        background: {kpi_bg} !important;
-        border-color: {card_border} !important;
-    }}
-    /* Text colors */
+    .stApp {{ background: {bg_main} !important; }}
+    [data-testid="stSidebar"] {{ background: {bg_sidebar} !important; border-right: 1px solid rgba(0,0,0,0.05) !important; }}
+    .glass-card {{ background: {card_bg} !important; backdrop-filter: blur(10px) !important; border-color: {card_border} !important; }}
+    .kpi-card {{ background: {kpi_bg} !important; border-color: {card_border} !important; }}
     .section-title, .page-title, .hero-title, .poster-title,
     .kpi-value, .topnav-username, .sidebar-title {{
         color: {text_primary} !important;
@@ -760,7 +291,7 @@ st.markdown(f"""
     .sidebar-quote, .metric-title, .hero-desc, .topnav-userrole {{
         color: {text_secondary} !important;
     }}
-    /* Navbar */
+    /* Navbar user profile */
     .topnav-user {{
         background: rgba(255,255,255,0.08) !important;
         border-color: {card_border} !important;
@@ -787,10 +318,9 @@ with st.sidebar:
     """, unsafe_allow_html=True)
 
     if SIDEBAR_IMAGE:
-        st.image(f"data:image/png;base64,{SIDEBAR_IMAGE}", width=180)  # ukuran lebih kecil
+        st.image(f"data:image/png;base64,{SIDEBAR_IMAGE}", width=180)
 
     st.markdown("---")
-
     page = st.radio(
         "Navigation",
         PAGES,
@@ -814,65 +344,58 @@ with st.sidebar:
     """, unsafe_allow_html=True)
 
 # ==========================================================
-# TOP NAVBAR (with Share, Moon Toggle, and User profile)
+# TOP NAVBAR (tanpa "Share", hanya bulan + user)
 # ==========================================================
 
 def show_topnav():
     avatar_html = f'<img src="data:image/png;base64,{AVATAR_IMAGE}">' if AVATAR_IMAGE else "🧑‍🚀"
-    
-    # Tentukan ikon bulan sesuai mode
     moon_icon = "☀️" if not st.session_state.dark_mode else "🌙"
-    
-    # Gunakan layout columns untuk menyusun: Share | Moon | User
-    col1, col2, col3 = st.columns([1, 0.2, 2.5], gap="small")
-    
+
+    # Kolom kiri kosong sebagai spacer, kolom kanan berisi tombol dan user
+    col1, col2 = st.columns([6, 1.2])
     with col1:
-        st.markdown('<div style="color:#94a3b8; font-size:14px; padding:8px 0; font-weight:500;">Share</div>', unsafe_allow_html=True)
-    
+        pass  # kosong
     with col2:
-        # Tombol toggle tema
-        if st.button(moon_icon, key="theme_toggle", help="Toggle Dark/Light Theme", use_container_width=True):
-            st.session_state.dark_mode = not st.session_state.dark_mode
-            st.rerun()
-        # Styling tombol agar bulat dan transparan
-        st.markdown("""
-        <style>
-        div[data-testid="column"]:nth-of-type(2) button {
-            background: rgba(255,255,255,0.06) !important;
-            border: 1px solid rgba(255,255,255,0.08) !important;
-            border-radius: 50% !important;
-            width: 40px !important;
-            height: 40px !important;
-            font-size: 18px !important;
-            padding: 0 !important;
-            color: #e2e8f0 !important;
-            display: flex !important;
-            align-items: center !important;
-            justify-content: center !important;
-            min-width: 40px !important;
-        }
-        div[data-testid="column"]:nth-of-type(2) button:hover {
-            background: rgba(255,255,255,0.12) !important;
-        }
-        </style>
-        """, unsafe_allow_html=True)
-    
-    with col3:
-        st.markdown(f"""
-        <div style="display:flex; align-items:center; gap:10px; justify-content:flex-end;">
-            <div style="display:flex; align-items:center; gap:10px; background:rgba(255,255,255,0.04); border:1px solid rgba(255,255,255,0.08); padding:6px 14px 6px 6px; border-radius:999px;">
+        # Dua subkolom: tombol tema dan profil user
+        subcol1, subcol2 = st.columns([1, 3], gap="small")
+        with subcol1:
+            if st.button(moon_icon, key="theme_toggle", help="Toggle Dark/Light Theme", use_container_width=True):
+                st.session_state.dark_mode = not st.session_state.dark_mode
+                st.rerun()
+            # Styling tombol bulat
+            st.markdown("""
+            <style>
+            div[data-testid="column"]:nth-of-type(2) div[data-testid="column"]:nth-of-type(1) button {
+                background: rgba(255,255,255,0.06) !important;
+                border: 1px solid rgba(255,255,255,0.08) !important;
+                border-radius: 50% !important;
+                width: 40px !important;
+                height: 40px !important;
+                font-size: 18px !important;
+                padding: 0 !important;
+                color: #e2e8f0 !important;
+                display: flex !important;
+                align-items: center !important;
+                justify-content: center !important;
+                min-width: 40px !important;
+            }
+            div[data-testid="column"]:nth-of-type(2) div[data-testid="column"]:nth-of-type(1) button:hover {
+                background: rgba(255,255,255,0.12) !important;
+            }
+            </style>
+            """, unsafe_allow_html=True)
+        with subcol2:
+            st.markdown(f"""
+            <div style="display:flex; align-items:center; gap:10px; background:rgba(255,255,255,0.04); border:1px solid rgba(255,255,255,0.08); padding:6px 14px 6px 6px; border-radius:999px; margin-left:4px;">
                 <div style="width:32px; height:32px; border-radius:50%; background:linear-gradient(135deg,#7c3aed,#ec4899); display:flex; align-items:center; justify-content:center; font-size:16px; overflow:hidden;">
                     {avatar_html}
                 </div>
                 <div>
                     <div style="font-size:14px; font-weight:600; color:white;">Otaku User</div>
                 </div>
-                <!-- dropdown arrow dihapus -->
             </div>
-        </div>
-        """, unsafe_allow_html=True)
+            """, unsafe_allow_html=True)
 
-# Panggil navbar
 show_topnav()
 
 # ==========================================================
@@ -950,12 +473,8 @@ def kpi_card(icon, label, value, delta=None, delta_dir="up", color_idx=0):
     unsafe_allow_html=True
     )
 
-def metric_card(title, value):
-    # legacy alias
-    kpi_card("📌", title, value)
-
 # ==========================================================
-# PAGE: OVERVIEW
+# PAGES (Overview, Analytics, etc.) - same as before
 # ==========================================================
 
 if page == "Overview":
@@ -986,7 +505,6 @@ if page == "Overview":
         else:
             st.info("No anime found matching your search.")
 
-    # ---------------- KPI ROW ----------------
     total_anime = len(df_anime)
     total_users = len(df_user)
     avg_score = round(df_anime["Score"].fillna(0).mean(), 2)
@@ -1002,7 +520,6 @@ if page == "Overview":
 
     st.markdown("<br>", unsafe_allow_html=True)
 
-    # ---------------- SCORE DIST + TOP GENRES + ANIME OF THE DAY ----------------
     left, mid, right = st.columns([1.4, 1.1, 1.1])
     with left:
         st.markdown('<div class="section-title">📶 Anime Score Distribution</div>', unsafe_allow_html=True)
@@ -1060,7 +577,6 @@ if page == "Overview":
         """, unsafe_allow_html=True)
         st.markdown('</div>', unsafe_allow_html=True)
 
-    # ---------------- TOP RATED + AI INSIGHTS PANEL ----------------
     left2, right2 = st.columns([2,1])
     with left2:
         st.markdown('<div class="section-title">🏆 Top Rated Anime</div>', unsafe_allow_html=True)
@@ -1218,12 +734,11 @@ elif page == "Analytics":
             st.markdown('</div>', unsafe_allow_html=True)
 
 # ==========================================================
-# PAGE: ANIME EXPLORER
+# PAGE: ANIME EXPLORER (shortened for brevity - same as original)
 # ==========================================================
 
 elif page == "Anime Explorer":
     show_banner("Anime Explorer 🌐", "Discover and explore anime from our comprehensive database", small=True)
-
     anime_name_list_explorer = sorted(df_anime["Name"].dropna().unique())
     search = st.selectbox(
         "🔍 Search Anime",
@@ -1232,7 +747,6 @@ elif page == "Anime Explorer":
         placeholder="Search anime by name...",
         label_visibility="collapsed",
     )
-
     c1,c2,c3,c4 = st.columns(4)
     with c1:
         genre_options = sorted(df_anime["Genres"].dropna().str.split(", ").explode().unique())
@@ -1335,8 +849,7 @@ elif page == "User Analytics":
     if "Gender" in df_user.columns:
         with left:
             st.markdown('<div class="section-title">👤 Gender Distribution</div>', unsafe_allow_html=True)
-            gender = df_user["Gender"].dropna()
-            gender = gender[gender.str.lower() != "non-binary".lower()].value_counts() if False else gender.value_counts()
+            gender = df_user["Gender"].dropna().value_counts()
             fig = px.pie(values=gender.values, names=gender.index, hole=0.5,
                          color_discrete_sequence=["#7c3aed","#ec4899","#3b82f6","#f59e0b"])
             fig.update_layout(paper_bgcolor="rgba(0,0,0,0)", font_color="white", height=380, margin=dict(l=10,r=10,t=10,b=10))
@@ -1380,10 +893,6 @@ elif page == "User Analytics":
     st.plotly_chart(fig4, use_container_width=True)
 
     st.markdown('<div class="section-title">🏆 Top Active Users</div>', unsafe_allow_html=True)
-    if "Mean Score" in df_user.columns:
-        rate_counts = df_score.groupby("user_id").size().reset_index(name="Anime Rated")
-        merged_users = df_user.merge(rate_counts, left_on="Mal ID" if "Mal ID" in df_user.columns else df_user.columns[0],
-                                      right_on="user_id", how="inner") if "Mal ID" in df_user.columns else None
     st.caption("Top users by number of ratings submitted")
     top_users_tbl = df_score.groupby("user_id").size().reset_index(name="Anime Rated").sort_values("Anime Rated", ascending=False).head(10)
     avg_per_user = df_score.groupby("user_id")["rating"].apply(lambda s: round(s.replace(-1, np.nan).mean(), 2)).reset_index(name="Avg Score")
