@@ -38,34 +38,42 @@ st.markdown("""
     .css-1d391kg {
         background: #111827;
         border-right: 1px solid #1f2937;
+        padding-top: 1rem;
     }
     .sidebar-logo {
         text-align: center;
-        padding: 1rem 0;
+        padding: 0.5rem 0 1rem 0;
         border-bottom: 1px solid #1f2937;
+        margin-bottom: 1rem;
     }
     .sidebar-logo h2 {
         color: #a78bfa;
         margin: 0;
         font-weight: 700;
+        font-size: 1.4rem;
         letter-spacing: -0.5px;
     }
-    .sidebar-logo p {
+    .sidebar-logo .sub {
         color: #9ca3af;
         font-size: 0.8rem;
         margin: 0;
+        font-weight: 300;
     }
     .sidebar-menu {
-        margin: 1.5rem 0;
+        margin: 0.5rem 0;
     }
     .sidebar-menu .menu-item {
-        padding: 0.6rem 1rem;
+        padding: 0.5rem 1rem;
         border-radius: 8px;
         margin-bottom: 0.2rem;
         color: #d1d5db;
         font-weight: 500;
         cursor: pointer;
         transition: background 0.2s;
+        font-size: 0.95rem;
+        display: flex;
+        align-items: center;
+        gap: 0.6rem;
     }
     .sidebar-menu .menu-item:hover {
         background: #1f2937;
@@ -74,15 +82,30 @@ st.markdown("""
         background: #7c3aed;
         color: white;
     }
-    .sidebar-footer {
-        position: fixed;
-        bottom: 1rem;
-        font-size: 0.75rem;
-        color: #6b7280;
-        text-align: center;
-        width: 200px;
+    .sidebar-section {
+        margin-top: 1.5rem;
         border-top: 1px solid #1f2937;
         padding-top: 1rem;
+    }
+    .sidebar-section .section-label {
+        font-size: 0.7rem;
+        text-transform: uppercase;
+        color: #6b7280;
+        letter-spacing: 0.5px;
+        padding: 0 1rem;
+        margin-bottom: 0.3rem;
+    }
+    .sidebar-footer {
+        margin-top: 2rem;
+        padding: 1rem 0;
+        border-top: 1px solid #1f2937;
+        text-align: center;
+        font-size: 0.75rem;
+        color: #6b7280;
+    }
+    .sidebar-footer .jp {
+        font-size: 0.7rem;
+        color: #4b5563;
     }
     /* Hero Banner */
     .hero-banner {
@@ -150,7 +173,6 @@ st.markdown("""
         display: inline-block;
         margin-top: 0.3rem;
     }
-    /* Section Title */
     .section-title {
         font-size: 1.5rem;
         font-weight: 600;
@@ -160,7 +182,7 @@ st.markdown("""
         border-bottom: 2px solid #7c3aed;
         display: inline-block;
     }
-    /* Anime Card (untuk top rated) */
+    /* Anime row for top rated */
     .anime-row {
         display: flex;
         flex-wrap: wrap;
@@ -176,6 +198,7 @@ st.markdown("""
         display: flex;
         justify-content: space-between;
         align-items: center;
+        margin-bottom: 0.4rem;
     }
     .anime-item .rank {
         font-weight: 700;
@@ -190,7 +213,7 @@ st.markdown("""
         color: #fbbf24;
         font-weight: 600;
     }
-    /* Anime of the Day */
+    /* AOTD */
     .aotd {
         background: #111827;
         border-radius: 16px;
@@ -235,7 +258,6 @@ st.markdown("""
         font-size: 0.9rem;
         margin-top: 0.5rem;
     }
-    /* AI Insight Cards */
     .insight-grid {
         display: grid;
         grid-template-columns: repeat(3, 1fr);
@@ -260,7 +282,6 @@ st.markdown("""
         color: #f1f5f9;
         margin-top: 0.2rem;
     }
-    /* Footer */
     .footer {
         margin-top: 3rem;
         padding: 1rem 0;
@@ -273,7 +294,6 @@ st.markdown("""
         color: #a78bfa;
         text-decoration: none;
     }
-    /* Responsive */
     @media (max-width: 768px) {
         .kpi-grid { grid-template-columns: repeat(2, 1fr); }
         .insight-grid { grid-template-columns: 1fr; }
@@ -326,44 +346,84 @@ with st.spinner("Membangun similarity matrix..."):
     similarity_df = build_similarity()
 
 # =============================================
-# 6. SIDEBAR (seperti gambar)
+# 6. SIDEBAR (sesuai desain gambar)
 # =============================================
 with st.sidebar:
+    # Logo dan judul
     st.markdown("""
     <div class="sidebar-logo">
         <h2>🎌 ANIME INSIGHT AI</h2>
-        <p>アニメインサイト</p>
+        <div class="sub">アニメインサイト</div>
     </div>
     """, unsafe_allow_html=True)
-    
-    # Menu navigasi (tanpa streamlit-option-menu, pakai button sederhana)
+
+    # Menu utama
     st.markdown('<div class="sidebar-menu">', unsafe_allow_html=True)
-    menu_options = ["Overview", "Analytics", "Recommendations", "AI Insights"]
-    icons = ["🏠", "📊", "🎯", "💡"]
     
-    # Inisialisasi session state untuk menu
-    if 'menu_page' not in st.session_state:
-        st.session_state.menu_page = "Overview"
+    # Daftar menu dengan ikon dan key
+    menu_items = [
+        ("🏠", "Overview"),
+        ("📊", "Anime Explorer"),
+        ("📈", "Analytics"),
+        ("👥", "User Analytics"),
+        ("🎯", "Recommendations"),
+        ("💡", "AI Insights"),
+    ]
     
-    for i, (opt, icon) in enumerate(zip(menu_options, icons)):
-        active = "active" if st.session_state.menu_page == opt else ""
-        if st.button(f"{icon} {opt}", key=f"menu_{opt}", use_container_width=True):
-            st.session_state.menu_page = opt
+    # Inisialisasi session state untuk halaman
+    if 'page' not in st.session_state:
+        st.session_state.page = "Overview"
+    
+    for icon, label in menu_items:
+        active = "active" if st.session_state.page == label else ""
+        # Gunakan button untuk navigasi
+        if st.button(f"{icon} {label}", key=f"menu_{label}", use_container_width=True):
+            st.session_state.page = label
             st.rerun()
-    st.markdown('</div>', unsafe_allow_html=True)
     
+    st.markdown('</div>', unsafe_allow_html=True)
+
+    # Section: Ratings (tombol akses cepat)
+    st.markdown('<div class="sidebar-section">', unsafe_allow_html=True)
+    st.markdown('<div class="section-label">📌 Ratings</div>', unsafe_allow_html=True)
+    if st.button("⭐ Ratings", key="ratings", use_container_width=True):
+        st.session_state.page = "Ratings"  # placeholder
+        st.rerun()
+    st.markdown('</div>', unsafe_allow_html=True)
+
+    # Section: Settings, Dataset Update, Report an Issue
+    st.markdown('<div class="sidebar-section">', unsafe_allow_html=True)
+    st.markdown('<div class="section-label">⚙️ Settings</div>', unsafe_allow_html=True)
+    if st.button("⚙️ Settings", key="settings", use_container_width=True):
+        st.session_state.page = "Settings"
+        st.rerun()
+    
+    st.markdown('<div class="section-label" style="margin-top:0.5rem;">🔄 Dataset Update</div>', unsafe_allow_html=True)
+    if st.button("🔄 Dataset Update", key="dataset_update", use_container_width=True):
+        st.session_state.page = "Dataset Update"
+        st.rerun()
+    
+    st.markdown('<div class="section-label" style="margin-top:0.5rem;">📢 Report an Issue</div>', unsafe_allow_html=True)
+    if st.button("📢 Report an Issue", key="report", use_container_width=True):
+        st.session_state.page = "Report Issue"
+        st.rerun()
+    st.markdown('</div>', unsafe_allow_html=True)
+
     # Footer sidebar
     st.markdown("""
     <div class="sidebar-footer">
-        Stay curious, keep exploring.<br>探求し続けよう
+        Stay curious, keep exploring.<br>
+        <span class="jp">探求し続けよう</span>
     </div>
     """, unsafe_allow_html=True)
 
 # =============================================
-# 7. PAGE: OVERVIEW (mirip gambar)
+# 7. PAGE HANDLING
 # =============================================
-if st.session_state.menu_page == "Overview":
-    # Hero Banner
+page = st.session_state.page
+
+# === OVERVIEW ===
+if page == "Overview":
     st.markdown("""
     <div class="hero-banner">
         <h1>Welcome back, <span>Anime Explorer!</span></h1>
@@ -373,7 +433,6 @@ if st.session_state.menu_page == "Overview":
     </div>
     """, unsafe_allow_html=True)
 
-    # Search bar (placeholder)
     st.text_input("🔍 Search anime, genre, studio, or keyword...", placeholder="Search...", key="global_search")
 
     # KPI Cards
@@ -422,7 +481,7 @@ if st.session_state.menu_page == "Overview":
         </div>
         """, unsafe_allow_html=True)
 
-    # Grafik: Anime Score Distribution
+    # Score Distribution
     st.markdown("<div class='section-title'>📊 Anime Score Distribution</div>", unsafe_allow_html=True)
     fig = px.histogram(df_anime, x='Score', nbins=30, color_discrete_sequence=['#7c3aed'])
     fig.update_layout(
@@ -434,7 +493,7 @@ if st.session_state.menu_page == "Overview":
     )
     st.plotly_chart(fig, use_container_width=True)
 
-    # Dua kolom: Top Rated Anime (left) dan Score by Type (right)
+    # Top Rated & Score by Type
     col_left, col_right = st.columns([3, 2])
     with col_left:
         st.markdown("<div class='section-title'>🏆 Top Rated Anime</div>", unsafe_allow_html=True)
@@ -453,7 +512,6 @@ if st.session_state.menu_page == "Overview":
     
     with col_right:
         st.markdown("<div class='section-title'>📈 Score by Type</div>", unsafe_allow_html=True)
-        # Boxplot atau bar rata-rata
         avg_by_type = df_anime.groupby('Type')['Score'].mean().sort_values(ascending=False).reset_index()
         fig2 = px.bar(avg_by_type, x='Type', y='Score', color='Type', 
                       color_discrete_sequence=px.colors.qualitative.Pastel)
@@ -466,11 +524,10 @@ if st.session_state.menu_page == "Overview":
         )
         st.plotly_chart(fig2, use_container_width=True)
 
-    # Anime of the Day + Pie Chart (two columns)
+    # Anime of the Day + Genre Pie
     col_aotd, col_pie = st.columns([2, 1])
     with col_aotd:
         st.markdown("<div class='section-title'>⭐ Anime of the Day</div>", unsafe_allow_html=True)
-        # Random sample
         anime_day = df_anime.sample(1).iloc[0]
         st.markdown(f"""
         <div class="aotd">
@@ -518,31 +575,39 @@ if st.session_state.menu_page == "Overview":
             </div>
             """, unsafe_allow_html=True)
 
-# =============================================
-# 8. PAGE: ANALYTICS (sama seperti sebelumnya, tapi ringkas)
-# =============================================
-elif st.session_state.menu_page == "Analytics":
-    st.markdown("<h1 style='color:#f1f5f9;'>📊 Analytics</h1>", unsafe_allow_html=True)
-    # ... (bisa diisi dengan kode dari halaman Analytics sebelumnya, atau sederhana)
-    st.info("Halaman Analytics akan menampilkan berbagai grafik interaktif dan filter.") 
-    # Untuk efisiensi, kita bisa reuse kode dari versi sebelumnya.
+# === ANIME EXPLORER ===
+elif page == "Anime Explorer":
+    st.markdown("<h1 style='color:#f1f5f9;'>📊 Anime Explorer</h1>", unsafe_allow_html=True)
+    st.info("Halaman ini memungkinkan Anda menjelajahi semua anime dengan filter dan grafik interaktif.")
+    # Bisa diisi dengan kode Analytics yang sudah ada
 
-# =============================================
-# 9. PAGE: RECOMMENDATIONS
-# =============================================
-elif st.session_state.menu_page == "Recommendations":
+# === ANALYTICS ===
+elif page == "Analytics":
+    st.markdown("<h1 style='color:#f1f5f9;'>📈 Analytics</h1>", unsafe_allow_html=True)
+    st.info("Halaman Analytics menampilkan tren dan statistik mendalam tentang anime.")
+
+# === USER ANALYTICS ===
+elif page == "User Analytics":
+    st.markdown("<h1 style='color:#f1f5f9;'>👥 User Analytics</h1>", unsafe_allow_html=True)
+    st.info("Analisis demografi pengguna: gender, lokasi, usia, dan perilaku.")
+
+# === RECOMMENDATIONS ===
+elif page == "Recommendations":
     st.markdown("<h1 style='color:#f1f5f9;'>🎯 Recommendations</h1>", unsafe_allow_html=True)
-    # ... (bisa diisi dengan kode rekomendasi)
+    # Panggil kode rekomendasi dari versi sebelumnya (bisa di-copy-paste)
 
-# =============================================
-# 10. PAGE: AI INSIGHTS
-# =============================================
-elif st.session_state.menu_page == "AI Insights":
+# === AI INSIGHTS ===
+elif page == "AI Insights":
     st.markdown("<h1 style='color:#f1f5f9;'>💡 AI Insights</h1>", unsafe_allow_html=True)
-    st.markdown("More insights coming soon...")
+    st.markdown("Lebih banyak insight akan segera hadir...")
+
+# === PLACEHOLDER PAGES (Ratings, Settings, Dataset Update, Report) ===
+elif page in ["Ratings", "Settings", "Dataset Update", "Report Issue"]:
+    st.markdown(f"<h1 style='color:#f1f5f9;'>{page}</h1>", unsafe_allow_html=True)
+    st.warning(f"Halaman **{page}** sedang dalam pengembangan. Segera hadir!")
 
 # =============================================
-# 11. FOOTER
+# 8. FOOTER
 # =============================================
 st.markdown("""
 <div class="footer">
