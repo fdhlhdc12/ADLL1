@@ -95,22 +95,22 @@ with st.spinner("Building Recommendation Engine..."):
     similarity_df = build_similarity()
 
 # ==========================================================
-# PREMIUM CSS (gradasi ungu-biru-hitam)
+# PREMIUM CSS — GRADASI UNGU-BIRU ELEGAN
 # ==========================================================
 bg_style = f"""
 .stApp {{
     background:
-        linear-gradient(135deg, rgba(15, 23, 42, 0.95), rgba(30, 27, 75, 0.95), rgba(88, 28, 135, 0.90)),
+        linear-gradient(160deg, #0a0e1a 0%, #1a1040 30%, #2d1b69 60%, #1a1040 85%, #0a0e1a 100%),
         url("data:image/jpeg;base64,{BG_IMAGE}");
     background-size: cover;
     background-position: center;
     background-attachment: fixed;
-    color: #f1f5f9;
+    color: #f0f0f0;
 }}
 """ if BG_IMAGE else """
 .stApp {
-    background: linear-gradient(135deg, #0f172a, #1e1b4b, #581c87);
-    color: #f1f5f9;
+    background: linear-gradient(160deg, #0a0e1a 0%, #1a1040 30%, #2d1b69 60%, #1a1040 85%, #0a0e1a 100%);
+    color: #f0f0f0;
 }
 """
 
@@ -124,67 +124,76 @@ st.markdown(f"""
         padding-right: 2rem;
         padding-bottom: 2rem;
     }}
-    /* SIDEBAR */
+    /* SIDEBAR — transparan dengan backdrop glass */
     section[data-testid="stSidebar"] {{
-        background: rgba(15, 23, 42, 0.85);
+        background: rgba(10, 14, 26, 0.85);
         backdrop-filter: blur(20px);
         border-right: 1px solid rgba(255,255,255,0.05);
     }}
     .logo-container {{
         text-align: center;
-        padding-top: 10px;
+        padding-top: 20px;
         padding-bottom: 25px;
+        border-bottom: 1px solid rgba(255,255,255,0.05);
     }}
     .logo-title {{
-        font-size: 30px;
+        font-size: 28px;
         font-weight: 800;
-        background: linear-gradient(135deg, #c084fc, #8b5cf6);
+        background: linear-gradient(135deg, #a78bfa, #7c3aed, #6d28d9);
         -webkit-background-clip: text;
         -webkit-text-fill-color: transparent;
+        letter-spacing: -0.5px;
     }}
     .logo-sub {{
         font-size: 12px;
         color: #94a3b8;
         letter-spacing: 2px;
+        margin-top: 2px;
+        -webkit-text-fill-color: #94a3b8;
     }}
-    /* BUTTON SIDEBAR */
+    /* MENU SIDEBAR */
     div[data-testid="stButton"] button {{
         width: 100%;
         background: transparent;
         border: none;
         color: #cbd5e1;
-        padding: 8px 12px;
-        border-radius: 10px;
+        padding: 10px 14px;
+        border-radius: 12px;
         text-align: left;
-        font-size: 16px;
-        transition: 0.3s;
+        font-size: 15px;
+        font-weight: 500;
+        transition: all 0.3s ease;
+        margin-bottom: 2px;
     }}
     div[data-testid="stButton"] button:hover {{
-        background: rgba(139, 92, 246, 0.2);
+        background: rgba(124, 58, 237, 0.15);
         color: white;
+        transform: translateX(4px);
     }}
-    div[data-testid="stButton"] button:focus {{
-        background: #7c3aed !important;
+    div[data-testid="stButton"] button:active {{
+        background: linear-gradient(135deg, #7c3aed, #6d28d9) !important;
         color: white !important;
-        box-shadow: 0 0 20px rgba(124, 58, 237, 0.4);
+        box-shadow: 0 4px 20px rgba(124, 58, 237, 0.4);
+        transform: translateX(4px);
     }}
-    /* KPI CARDS */
+    /* KPI CARDS — glassmorphism */
     .kpi-card {{
-        background: rgba(255,255,255,0.05);
+        background: rgba(255,255,255,0.04);
         backdrop-filter: blur(20px);
-        border: 1px solid rgba(255,255,255,0.08);
+        border: 1px solid rgba(255,255,255,0.06);
         border-radius: 20px;
-        padding: 25px;
+        padding: 22px 15px;
         text-align: center;
-        transition: 0.3s;
+        transition: all 0.3s ease;
     }}
     .kpi-card:hover {{
-        transform: translateY(-5px);
-        box-shadow: 0 10px 30px rgba(139, 92, 246, 0.3);
-        border-color: rgba(139, 92, 246, 0.3);
+        transform: translateY(-6px);
+        box-shadow: 0 12px 40px rgba(124, 58, 237, 0.25);
+        border-color: rgba(124, 58, 237, 0.3);
+        background: rgba(255,255,255,0.07);
     }}
     .kpi-value {{
-        font-size: 36px;
+        font-size: 34px;
         font-weight: 800;
         background: linear-gradient(135deg, #c084fc, #8b5cf6);
         -webkit-background-clip: text;
@@ -193,29 +202,49 @@ st.markdown(f"""
     .kpi-label {{
         font-size: 14px;
         color: #cbd5e1;
+        margin-top: 4px;
+        -webkit-text-fill-color: #cbd5e1;
     }}
     .kpi-growth {{
         font-size: 12px;
-        color: #22c55e;
+        color: #34d399;
+        background: rgba(52, 211, 153, 0.15);
+        padding: 2px 12px;
+        border-radius: 20px;
+        display: inline-block;
+        margin-top: 6px;
+        -webkit-text-fill-color: #34d399;
     }}
     /* SECTION TITLE */
     .section-title {{
-        font-size: 28px;
+        font-size: 26px;
         font-weight: 700;
-        margin: 25px 0 20px 0;
-        color: white;
+        margin: 30px 0 20px 0;
+        color: #f0f0f0;
         border-left: 5px solid #8b5cf6;
-        padding-left: 15px;
+        padding-left: 16px;
+        background: linear-gradient(90deg, #8b5cf6, transparent);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+    }}
+    .section-title-plain {{
+        font-size: 26px;
+        font-weight: 700;
+        margin: 30px 0 20px 0;
+        color: #f0f0f0;
+        border-left: 5px solid #8b5cf6;
+        padding-left: 16px;
     }}
     /* HERO BANNER */
     .hero-container {{
         position: relative;
-        height: 280px;
+        height: 260px;
         overflow: hidden;
-        border-radius: 25px;
+        border-radius: 24px;
         margin-bottom: 25px;
-        border: 1px solid rgba(139, 92, 246, 0.2);
-        box-shadow: 0 8px 30px rgba(0,0,0,0.5);
+        border: 1px solid rgba(139, 92, 246, 0.15);
+        box-shadow: 0 8px 40px rgba(0,0,0,0.6);
     }}
     .hero-container img {{
         width: 100%;
@@ -228,14 +257,14 @@ st.markdown(f"""
         left: 0;
         right: 0;
         bottom: 0;
-        padding: 35px 45px;
+        padding: 30px 40px;
         display: flex;
         flex-direction: column;
         justify-content: center;
-        background: linear-gradient(90deg, rgba(15,23,42,0.95) 0%, rgba(15,23,42,0.70) 50%, rgba(15,23,42,0.10) 100%);
+        background: linear-gradient(90deg, rgba(10,14,26,0.92) 0%, rgba(10,14,26,0.70) 50%, rgba(10,14,26,0.10) 100%);
     }}
     .hero-overlay .title {{
-        font-size: 2.8rem;
+        font-size: 2.6rem;
         font-weight: 800;
         color: white;
         line-height: 1.1;
@@ -249,12 +278,12 @@ st.markdown(f"""
         font-size: 1.2rem;
         color: #c084fc;
         font-weight: 600;
-        margin-top: 5px;
+        margin-top: 4px;
     }}
     .hero-overlay .desc {{
         font-size: 1rem;
         color: #94a3b8;
-        margin-top: 5px;
+        margin-top: 4px;
     }}
     /* POSTER CARD */
     .poster-initial {{
@@ -263,7 +292,7 @@ st.markdown(f"""
         display: flex;
         align-items: center;
         justify-content: center;
-        font-size: 4rem;
+        font-size: 3.5rem;
         font-weight: 700;
         color: white;
         width: 100%;
@@ -277,14 +306,14 @@ st.markdown(f"""
         transition: 0.3s;
     }}
     .anime-poster-card:hover {{
-        transform: scale(1.02);
+        transform: scale(1.03);
         border-color: #8b5cf6;
-        box-shadow: 0 8px 25px rgba(139, 92, 246, 0.2);
+        box-shadow: 0 8px 30px rgba(139, 92, 246, 0.2);
     }}
     /* FOOTER */
     .footer {{
         text-align: center;
-        padding: 20px;
+        padding: 18px;
         color: #94a3b8;
         font-size: 13px;
         border-top: 1px solid rgba(255,255,255,0.05);
@@ -304,6 +333,17 @@ st.markdown(f"""
     .js-plotly-plot {{
         border-radius: 16px;
         overflow: hidden;
+    }}
+    /* SIDEBAR FOOTER */
+    .sidebar-footer {{
+        position: fixed;
+        bottom: 20px;
+        width: 200px;
+        text-align: center;
+        color: #6b7280;
+        font-size: 11px;
+        border-top: 1px solid rgba(255,255,255,0.05);
+        padding-top: 12px;
     }}
 </style>
 """, unsafe_allow_html=True)
@@ -325,7 +365,7 @@ def show_banner(title, subtitle="", desc=""):
     """, unsafe_allow_html=True)
 
 # ==========================================================
-# SIDEBAR
+# SIDEBAR — LENGKAP DENGAN LOGO DAN MENU
 # ==========================================================
 with st.sidebar:
     st.markdown("""
@@ -334,8 +374,8 @@ with st.sidebar:
         <div class="logo-sub">アニメインサイト</div>
     </div>
     """, unsafe_allow_html=True)
-    st.divider()
 
+    # Menu utama (sesuai gambar)
     menu_items = [
         ("🏠 Overview", "Overview"),
         ("🎬 Anime Explorer", "Anime Explorer"),
@@ -356,9 +396,10 @@ with st.sidebar:
                 div[data-testid="stButton"] button[key="btn_{key}"] {{
                     background: linear-gradient(135deg, #7c3aed, #6d28d9) !important;
                     color: white !important;
-                    border-radius: 10px;
+                    border-radius: 12px;
                     font-weight: 600;
-                    box-shadow: 0 4px 15px rgba(124,58,237,0.4);
+                    box-shadow: 0 4px 20px rgba(124,58,237,0.4);
+                    transform: translateX(4px);
                 }}
                 </style>
                 """,
@@ -366,14 +407,37 @@ with st.sidebar:
             )
 
     st.divider()
-    st.markdown(
-        """
-        <div style="text-align:center; color:#94a3b8; font-size:12px;">
-            ⭐ Premium Dashboard<br>Powered by Streamlit
-        </div>
-        """,
-        unsafe_allow_html=True,
-    )
+
+    # Section: Ratings (opsional)
+    st.markdown("**📌 Ratings**")
+    if st.button("⭐ Ratings", key="btn_ratings", use_container_width=True):
+        st.session_state.page = "Ratings"
+        st.rerun()
+
+    st.markdown("**⚙️ Settings**")
+    if st.button("⚙️ Settings", key="btn_settings", use_container_width=True):
+        st.session_state.page = "Settings"
+        st.rerun()
+
+    st.markdown("**🔄 Dataset Update**")
+    if st.button("🔄 Dataset Update", key="btn_dataset", use_container_width=True):
+        st.session_state.page = "Dataset Update"
+        st.rerun()
+
+    st.markdown("**📢 Report an Issue**")
+    if st.button("📢 Report an Issue", key="btn_report", use_container_width=True):
+        st.session_state.page = "Report Issue"
+        st.rerun()
+
+    st.divider()
+
+    # Footer sidebar
+    st.markdown("""
+    <div style="text-align:center; color:#6b7280; font-size:11px; padding-top:10px;">
+        Stay curious, keep exploring.<br>
+        <span style="font-size:10px; color:#4b5563;">探求し続けよう</span>
+    </div>
+    """, unsafe_allow_html=True)
 
 # ==========================================================
 # PAGE: OVERVIEW
@@ -431,7 +495,7 @@ if st.session_state.page == "Overview":
         <div class="kpi-card">
             <div class="kpi-value">{total_genres}</div>
             <div class="kpi-label">🏷 Total Genres</div>
-            <div class="kpi-growth" style="color:#94a3b8;">Stable</div>
+            <div class="kpi-growth" style="color:#94a3b8; background:transparent;">Stable</div>
         </div>
         """, unsafe_allow_html=True)
     with c5:
@@ -448,15 +512,14 @@ if st.session_state.page == "Overview":
     # Score Distribution
     st.markdown('<div class="section-title">📊 Anime Score Distribution</div>', unsafe_allow_html=True)
     fig = px.histogram(df_anime, x="Score", nbins=30, color_discrete_sequence=["#8b5cf6"])
-    fig.update_layout(paper_bgcolor="rgba(0,0,0,0)", plot_bgcolor="rgba(0,0,0,0)", font_color="white", height=400)
+    fig.update_layout(paper_bgcolor="rgba(0,0,0,0)", plot_bgcolor="rgba(0,0,0,0)", font_color="#f0f0f0", height=400)
     st.plotly_chart(fig, use_container_width=True)
 
-    # Top Rated + Score by Type
+    # Top Rated (with posters) + Score by Type
     left, right = st.columns([3, 2])
     with left:
-        st.markdown('<div class="section-title">🏆 Top Rated Anime</div>', unsafe_allow_html=True)
+        st.markdown('<div class="section-title-plain">🏆 Top Rated Anime</div>', unsafe_allow_html=True)
         top5 = df_anime.nlargest(5, "Score")[["Name", "Score", "Image URL"]]
-        # Tampilkan poster untuk top 5
         cols = st.columns(5)
         for i, (_, row) in enumerate(top5.iterrows()):
             with cols[i]:
@@ -473,14 +536,14 @@ if st.session_state.page == "Overview":
                 st.caption(f"⭐ {row['Score']:.2f}")
         st.dataframe(df_anime.nlargest(10, "Score")[["Name", "Score"]], use_container_width=True, hide_index=True)
     with right:
-        st.markdown('<div class="section-title">📈 Score by Type</div>', unsafe_allow_html=True)
+        st.markdown('<div class="section-title-plain">📈 Score by Type</div>', unsafe_allow_html=True)
         avg_type = df_anime.groupby("Type")["Score"].mean().reset_index()
         fig2 = px.bar(avg_type, x="Type", y="Score", color="Type", color_discrete_sequence=px.colors.qualitative.Pastel)
-        fig2.update_layout(paper_bgcolor="rgba(0,0,0,0)", plot_bgcolor="rgba(0,0,0,0)", font_color="white", showlegend=False)
+        fig2.update_layout(paper_bgcolor="rgba(0,0,0,0)", plot_bgcolor="rgba(0,0,0,0)", font_color="#f0f0f0", showlegend=False)
         st.plotly_chart(fig2, use_container_width=True)
 
-    # Anime of the Day (dengan poster)
-    st.markdown('<div class="section-title">⭐ Anime of the Day</div>', unsafe_allow_html=True)
+    # Anime of the Day (with poster)
+    st.markdown('<div class="section-title-plain">⭐ Anime of the Day</div>', unsafe_allow_html=True)
     anime_day = df_anime.sample(1).iloc[0]
     col1, col2 = st.columns([1, 3])
     with col1:
@@ -500,14 +563,14 @@ if st.session_state.page == "Overview":
             st.info(anime_day["Synopsis"][:400])
 
     # Genre Pie
-    st.markdown('<div class="section-title">🎯 Genre Distribution</div>', unsafe_allow_html=True)
+    st.markdown('<div class="section-title-plain">🎯 Genre Distribution</div>', unsafe_allow_html=True)
     genre_counts = df_anime[df_anime["Genres"] != "UNKNOWN"]["Genres"].str.split(", ").explode().value_counts().head(10)
     fig3 = px.pie(values=genre_counts.values, names=genre_counts.index, color_discrete_sequence=px.colors.qualitative.Set3)
-    fig3.update_layout(paper_bgcolor="rgba(0,0,0,0)", font_color="white", height=450)
+    fig3.update_layout(paper_bgcolor="rgba(0,0,0,0)", font_color="#f0f0f0", height=450)
     st.plotly_chart(fig3, use_container_width=True)
 
     # AI Insights
-    st.markdown('<div class="section-title">💡 AI Insights</div>', unsafe_allow_html=True)
+    st.markdown('<div class="section-title-plain">💡 AI Insights</div>', unsafe_allow_html=True)
     top_genre = genre_counts.index[0]
     top_anime_name = df_anime.nlargest(1, "Score")["Name"].iloc[0]
     col1, col2, col3 = st.columns(3)
@@ -550,7 +613,6 @@ elif st.session_state.page == "Anime Explorer":
 
     st.success(f"Found {len(filtered):,} Anime")
 
-    # Stats
     s1, s2, s3, s4 = st.columns(4)
     s1.metric("Anime", len(filtered))
     s2.metric("Avg Score", round(filtered["Score"].mean(), 2))
@@ -559,8 +621,8 @@ elif st.session_state.page == "Anime Explorer":
 
     st.markdown("<br>", unsafe_allow_html=True)
 
-    # Gallery with posters (max 8 untuk performa)
-    st.markdown('<div class="section-title">🌟 Anime Gallery</div>', unsafe_allow_html=True)
+    # Gallery (8 poster)
+    st.markdown('<div class="section-title-plain">🌟 Anime Gallery</div>', unsafe_allow_html=True)
     preview = filtered.head(8)
     cols = st.columns(4)
     for idx, (_, row) in enumerate(preview.iterrows()):
@@ -584,27 +646,25 @@ elif st.session_state.page == "Anime Explorer":
             st.caption(f"**{row['Name'][:25]}**")
             st.caption(f"⭐ {row['Score']:.2f}  •  {row['Type']}")
 
-    # Top genres & score distribution
     left, right = st.columns(2)
     with left:
-        st.markdown('<div class="section-title">🏷 Top Genres</div>', unsafe_allow_html=True)
+        st.markdown('<div class="section-title-plain">🏷 Top Genres</div>', unsafe_allow_html=True)
         genre_counts2 = filtered[filtered["Genres"] != "UNKNOWN"]["Genres"].str.split(", ").explode().value_counts().head(10)
         fig = px.bar(x=genre_counts2.values, y=genre_counts2.index, orientation="h", color=genre_counts2.values, color_continuous_scale="purples")
-        fig.update_layout(paper_bgcolor="rgba(0,0,0,0)", plot_bgcolor="rgba(0,0,0,0)", font_color="white", height=450, showlegend=False)
+        fig.update_layout(paper_bgcolor="rgba(0,0,0,0)", plot_bgcolor="rgba(0,0,0,0)", font_color="#f0f0f0", height=450, showlegend=False)
         st.plotly_chart(fig, use_container_width=True)
     with right:
-        st.markdown('<div class="section-title">📈 Score Distribution</div>', unsafe_allow_html=True)
+        st.markdown('<div class="section-title-plain">📈 Score Distribution</div>', unsafe_allow_html=True)
         fig2 = px.histogram(filtered, x="Score", nbins=20, color_discrete_sequence=["#8b5cf6"])
-        fig2.update_layout(paper_bgcolor="rgba(0,0,0,0)", plot_bgcolor="rgba(0,0,0,0)", font_color="white", height=450)
+        fig2.update_layout(paper_bgcolor="rgba(0,0,0,0)", plot_bgcolor="rgba(0,0,0,0)", font_color="#f0f0f0", height=450)
         st.plotly_chart(fig2, use_container_width=True)
 
-    # Data table
-    st.markdown('<div class="section-title">📋 Anime Catalog</div>', unsafe_allow_html=True)
+    st.markdown('<div class="section-title-plain">📋 Anime Catalog</div>', unsafe_allow_html=True)
     display_cols = ["Name", "Genres", "Type", "Score", "Members"]
     st.dataframe(filtered[display_cols].sort_values("Score", ascending=False), use_container_width=True, height=600)
 
 # ==========================================================
-# PAGE: ANALYTICS (dengan heatmap fixed)
+# PAGE: ANALYTICS (heatmap fixed)
 # ==========================================================
 elif st.session_state.page == "Analytics":
     show_banner(
@@ -621,58 +681,54 @@ elif st.session_state.page == "Analytics":
 
     left, right = st.columns(2)
     with left:
-        st.markdown('<div class="section-title">⭐ Score Distribution</div>', unsafe_allow_html=True)
+        st.markdown('<div class="section-title-plain">⭐ Score Distribution</div>', unsafe_allow_html=True)
         fig = px.histogram(df_anime, x="Score", nbins=30, color_discrete_sequence=["#8b5cf6"])
-        fig.update_layout(paper_bgcolor="rgba(0,0,0,0)", plot_bgcolor="rgba(0,0,0,0)", font_color="white", height=400)
+        fig.update_layout(paper_bgcolor="rgba(0,0,0,0)", plot_bgcolor="rgba(0,0,0,0)", font_color="#f0f0f0", height=400)
         st.plotly_chart(fig, use_container_width=True)
     with right:
-        st.markdown('<div class="section-title">🎯 Genre Distribution</div>', unsafe_allow_html=True)
+        st.markdown('<div class="section-title-plain">🎯 Genre Distribution</div>', unsafe_allow_html=True)
         genre_counts = df_anime[df_anime["Genres"] != "UNKNOWN"]["Genres"].str.split(", ").explode().value_counts().head(15)
         fig2 = px.bar(x=genre_counts.index, y=genre_counts.values, color=genre_counts.values, color_continuous_scale="purples")
-        fig2.update_layout(paper_bgcolor="rgba(0,0,0,0)", plot_bgcolor="rgba(0,0,0,0)", font_color="white", showlegend=False, height=400)
+        fig2.update_layout(paper_bgcolor="rgba(0,0,0,0)", plot_bgcolor="rgba(0,0,0,0)", font_color="#f0f0f0", showlegend=False, height=400)
         st.plotly_chart(fig2, use_container_width=True)
 
     left, right = st.columns(2)
     with left:
-        st.markdown('<div class="section-title">🔥 Most Popular</div>', unsafe_allow_html=True)
+        st.markdown('<div class="section-title-plain">🔥 Most Popular</div>', unsafe_allow_html=True)
         popular = df_anime[df_anime["Popularity"] > 0].nsmallest(15, "Popularity")
         fig3 = px.bar(popular, x="Popularity", y="Name", orientation="h", color="Popularity", color_continuous_scale="purples")
-        fig3.update_layout(paper_bgcolor="rgba(0,0,0,0)", plot_bgcolor="rgba(0,0,0,0)", font_color="white", height=500, showlegend=False)
+        fig3.update_layout(paper_bgcolor="rgba(0,0,0,0)", plot_bgcolor="rgba(0,0,0,0)", font_color="#f0f0f0", height=500, showlegend=False)
         st.plotly_chart(fig3, use_container_width=True)
     with right:
-        st.markdown('<div class="section-title">👥 Top Members</div>', unsafe_allow_html=True)
+        st.markdown('<div class="section-title-plain">👥 Top Members</div>', unsafe_allow_html=True)
         members = df_anime.nlargest(15, "Members")
         fig4 = px.bar(members, x="Members", y="Name", orientation="h", color="Members", color_continuous_scale="blues")
-        fig4.update_layout(paper_bgcolor="rgba(0,0,0,0)", plot_bgcolor="rgba(0,0,0,0)", font_color="white", height=500, showlegend=False)
+        fig4.update_layout(paper_bgcolor="rgba(0,0,0,0)", plot_bgcolor="rgba(0,0,0,0)", font_color="#f0f0f0", height=500, showlegend=False)
         st.plotly_chart(fig4, use_container_width=True)
 
-    # Score vs Members
-    st.markdown('<div class="section-title">📊 Score vs Members</div>', unsafe_allow_html=True)
+    st.markdown('<div class="section-title-plain">📊 Score vs Members</div>', unsafe_allow_html=True)
     sample_df = df_anime.sample(min(2000, len(df_anime)))
     fig5 = px.scatter(sample_df, x="Members", y="Score", color="Type", hover_data=["Name"], color_discrete_sequence=px.colors.qualitative.Pastel)
-    fig5.update_layout(paper_bgcolor="rgba(0,0,0,0)", plot_bgcolor="rgba(0,0,0,0)", font_color="white", height=600)
+    fig5.update_layout(paper_bgcolor="rgba(0,0,0,0)", plot_bgcolor="rgba(0,0,0,0)", font_color="#f0f0f0", height=600)
     st.plotly_chart(fig5, use_container_width=True)
 
     # Heatmap — FIXED
-    st.markdown('<div class="section-title">🌡 Correlation Heatmap</div>', unsafe_allow_html=True)
-    # Pilih kolom numerik yang valid
+    st.markdown('<div class="section-title-plain">🌡 Correlation Heatmap</div>', unsafe_allow_html=True)
     numeric_cols = ["Score", "Members", "Popularity", "Rank"]
     available_cols = [c for c in numeric_cols if c in df_anime.columns]
     if len(available_cols) > 1:
-        # Pastikan semua numerik, drop NaN
         corr_data = df_anime[available_cols].apply(pd.to_numeric, errors="coerce").dropna()
         if not corr_data.empty and corr_data.shape[0] > 1:
             corr = corr_data.corr()
             fig6 = px.imshow(corr, text_auto=".2f", aspect="auto", color_continuous_scale="RdBu_r")
-            fig6.update_layout(height=500, paper_bgcolor="rgba(0,0,0,0)", font_color="white")
+            fig6.update_layout(height=500, paper_bgcolor="rgba(0,0,0,0)", font_color="#f0f0f0")
             st.plotly_chart(fig6, use_container_width=True)
         else:
             st.info("Not enough valid numeric data for heatmap.")
     else:
         st.info("Need at least 2 numeric columns for heatmap.")
 
-    # WordCloud
-    st.markdown('<div class="section-title">☁ Genre WordCloud</div>', unsafe_allow_html=True)
+    st.markdown('<div class="section-title-plain">☁ Genre WordCloud</div>', unsafe_allow_html=True)
     genre_text = " ".join(df_anime[df_anime["Genres"] != "UNKNOWN"]["Genres"].dropna())
     if genre_text.strip():
         wc = WordCloud(width=1200, height=500, background_color="black", colormap="plasma").generate(genre_text)
@@ -681,18 +737,16 @@ elif st.session_state.page == "Analytics":
         ax.axis("off")
         st.pyplot(fig_wc)
 
-    # Radar
-    st.markdown('<div class="section-title">🕸 Dataset Radar</div>', unsafe_allow_html=True)
+    st.markdown('<div class="section-title-plain">🕸 Dataset Radar</div>', unsafe_allow_html=True)
     if "Score" in df_anime.columns and "Members" in df_anime.columns:
         radar_categories = ["Score", "Members (log)"]
         radar_values = [df_anime["Score"].mean(), np.log1p(df_anime["Members"].mean())]
         fig_radar = go.Figure()
         fig_radar.add_trace(go.Scatterpolar(r=radar_values, theta=radar_categories, fill="toself", marker=dict(color="#8b5cf6")))
-        fig_radar.update_layout(polar=dict(radialaxis=dict(visible=True)), paper_bgcolor="rgba(0,0,0,0)", font_color="white", height=500)
+        fig_radar.update_layout(polar=dict(radialaxis=dict(visible=True)), paper_bgcolor="rgba(0,0,0,0)", font_color="#f0f0f0", height=500)
         st.plotly_chart(fig_radar, use_container_width=True)
 
-    # Data preview
-    st.markdown('<div class="section-title">📋 Dataset Preview</div>', unsafe_allow_html=True)
+    st.markdown('<div class="section-title-plain">📋 Dataset Preview</div>', unsafe_allow_html=True)
     st.dataframe(df_anime.head(100), use_container_width=True, height=500)
 
 # ==========================================================
@@ -775,7 +829,6 @@ elif st.session_state.page == "Recommendations":
         info = df_anime[df_anime["Name"] == selected].iloc[0]
         anime_id = info["anime_id"]
 
-        # Detail dengan poster
         col1, col2 = st.columns([1, 3])
         with col1:
             img = info["Image URL"]
@@ -801,9 +854,8 @@ elif st.session_state.page == "Recommendations":
             recs["Similarity"] = recs["anime_id"].map(sim_scores)
             recs = recs.sort_values("Similarity", ascending=False)
 
-            st.markdown('<div class="section-title">🔥 Recommended For You</div>', unsafe_allow_html=True)
+            st.markdown('<div class="section-title-plain">🔥 Recommended For You</div>', unsafe_allow_html=True)
 
-            # Netflix style: 5 columns
             cols = st.columns(5)
             for i, (_, row) in enumerate(recs.iterrows()):
                 with cols[i % 5]:
@@ -850,6 +902,13 @@ elif st.session_state.page == "AI Insights":
     st.success("📈 Users who watch Fantasy tend to give higher ratings.")
     st.success("🎯 Recommendation Engine ready to serve.")
     st.success("🚀 Dashboard analytics successfully generated.")
+
+# ==========================================================
+# PAGE: PLACEHOLDER (Ratings, Settings, dll)
+# ==========================================================
+elif st.session_state.page in ["Ratings", "Settings", "Dataset Update", "Report Issue"]:
+    st.markdown(f"<h1 style='color:#f0f0f0;'>{st.session_state.page}</h1>", unsafe_allow_html=True)
+    st.warning(f"Halaman **{st.session_state.page}** sedang dalam pengembangan. Segera hadir!")
 
 # ==========================================================
 # FOOTER
