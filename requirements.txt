@@ -2,7 +2,8 @@ streamlit
 pandas
 numpy
 plotly
-matplotlib
 wordcloud
+matplotlib
 scikit-learn
 gdown
+requests
