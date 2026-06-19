@@ -349,7 +349,6 @@ with st.spinner("Membangun similarity matrix..."):
 # 6. SIDEBAR (sesuai desain gambar)
 # =============================================
 with st.sidebar:
-    # Logo dan judul
     st.markdown("""
     <div class="sidebar-logo">
         <h2>🎌 ANIME INSIGHT AI</h2>
@@ -359,8 +358,6 @@ with st.sidebar:
 
     # Menu utama
     st.markdown('<div class="sidebar-menu">', unsafe_allow_html=True)
-    
-    # Daftar menu dengan ikon dan key
     menu_items = [
         ("🏠", "Overview"),
         ("📊", "Anime Explorer"),
@@ -369,47 +366,39 @@ with st.sidebar:
         ("🎯", "Recommendations"),
         ("💡", "AI Insights"),
     ]
-    
-    # Inisialisasi session state untuk halaman
     if 'page' not in st.session_state:
         st.session_state.page = "Overview"
-    
     for icon, label in menu_items:
         active = "active" if st.session_state.page == label else ""
-        # Gunakan button untuk navigasi
         if st.button(f"{icon} {label}", key=f"menu_{label}", use_container_width=True):
             st.session_state.page = label
             st.rerun()
-    
     st.markdown('</div>', unsafe_allow_html=True)
 
-    # Section: Ratings (tombol akses cepat)
+    # Section: Ratings
     st.markdown('<div class="sidebar-section">', unsafe_allow_html=True)
     st.markdown('<div class="section-label">📌 Ratings</div>', unsafe_allow_html=True)
     if st.button("⭐ Ratings", key="ratings", use_container_width=True):
-        st.session_state.page = "Ratings"  # placeholder
+        st.session_state.page = "Ratings"
         st.rerun()
     st.markdown('</div>', unsafe_allow_html=True)
 
-    # Section: Settings, Dataset Update, Report an Issue
+    # Section: Settings, Dataset Update, Report
     st.markdown('<div class="sidebar-section">', unsafe_allow_html=True)
     st.markdown('<div class="section-label">⚙️ Settings</div>', unsafe_allow_html=True)
     if st.button("⚙️ Settings", key="settings", use_container_width=True):
         st.session_state.page = "Settings"
         st.rerun()
-    
     st.markdown('<div class="section-label" style="margin-top:0.5rem;">🔄 Dataset Update</div>', unsafe_allow_html=True)
     if st.button("🔄 Dataset Update", key="dataset_update", use_container_width=True):
         st.session_state.page = "Dataset Update"
         st.rerun()
-    
     st.markdown('<div class="section-label" style="margin-top:0.5rem;">📢 Report an Issue</div>', unsafe_allow_html=True)
     if st.button("📢 Report an Issue", key="report", use_container_width=True):
         st.session_state.page = "Report Issue"
         st.rerun()
     st.markdown('</div>', unsafe_allow_html=True)
 
-    # Footer sidebar
     st.markdown("""
     <div class="sidebar-footer">
         Stay curious, keep exploring.<br>
@@ -491,7 +480,7 @@ if page == "Overview":
         height=350,
         margin=dict(l=20, r=20, t=30, b=20)
     )
-    st.plotly_chart(fig, use_container_width=True)
+    st.plotly_chart(fig, width='stretch')
 
     # Top Rated & Score by Type
     col_left, col_right = st.columns([3, 2])
@@ -499,8 +488,15 @@ if page == "Overview":
         st.markdown("<div class='section-title'>🏆 Top Rated Anime</div>", unsafe_allow_html=True)
         top10 = df_anime.nlargest(10, 'Score')[['Name', 'Score']]
         for i, (_, row) in enumerate(top10.iterrows()):
-            rank = i+1
-            medal = "🥇" if rank==1 else "🥈" if rank==2 else "🥉" else f"{rank}."
+            rank = i + 1
+            if rank == 1:
+                medal = "🥇"
+            elif rank == 2:
+                medal = "🥈"
+            elif rank == 3:
+                medal = "🥉"
+            else:
+                medal = f"{rank}."
             st.markdown(f"""
             <div class="anime-item">
                 <span class="rank">{medal}</span>
@@ -513,7 +509,7 @@ if page == "Overview":
     with col_right:
         st.markdown("<div class='section-title'>📈 Score by Type</div>", unsafe_allow_html=True)
         avg_by_type = df_anime.groupby('Type')['Score'].mean().sort_values(ascending=False).reset_index()
-        fig2 = px.bar(avg_by_type, x='Type', y='Score', color='Type', 
+        fig2 = px.bar(avg_by_type, x='Type', y='Score', color='Type',
                       color_discrete_sequence=px.colors.qualitative.Pastel)
         fig2.update_layout(
             paper_bgcolor='rgba(0,0,0,0)',
@@ -522,7 +518,7 @@ if page == "Overview":
             height=350,
             showlegend=False
         )
-        st.plotly_chart(fig2, use_container_width=True)
+        st.plotly_chart(fig2, width='stretch')
 
     # Anime of the Day + Genre Pie
     col_aotd, col_pie = st.columns([2, 1])
@@ -537,7 +533,7 @@ if page == "Overview":
                 <div class="meta">⭐ {anime_day['Score']:.2f} · Rank #{np.random.randint(1,100)} · {anime_day['Type']} · {np.random.randint(10,100)} Episodes</div>
                 <div>
                     <span class="genre">{anime_day['Genres'].split(', ')[0] if anime_day['Genres'] != 'UNKNOWN' else 'Unknown'}</span>
-                    <span class="genre">{anime_day['Genres'].split(', ')[1] if len(anime_day['Genres'].split(', '))>1 else ''}</span>
+                    <span class="genre">{anime_day['Genres'].split(', ')[1] if len(anime_day['Genres'].split(', ')) > 1 else ''}</span>
                 </div>
                 <div class="synopsis">{anime_day['Synopsis'][:200] if pd.notna(anime_day['Synopsis']) else 'Synopsis not available'}...</div>
             </div>
@@ -547,7 +543,7 @@ if page == "Overview":
     with col_pie:
         st.markdown("<div class='section-title'>🎯 Genre Distribution</div>", unsafe_allow_html=True)
         genre_counts = df_anime[df_anime['Genres'] != 'UNKNOWN']['Genres'].str.split(', ').explode().value_counts().head(6)
-        fig_pie = px.pie(values=genre_counts.values, names=genre_counts.index, 
+        fig_pie = px.pie(values=genre_counts.values, names=genre_counts.index,
                          color_discrete_sequence=px.colors.qualitative.Set3)
         fig_pie.update_layout(
             paper_bgcolor='rgba(0,0,0,0)',
@@ -556,7 +552,7 @@ if page == "Overview":
             height=300,
             margin=dict(l=10, r=10, t=20, b=10)
         )
-        st.plotly_chart(fig_pie, use_container_width=True)
+        st.plotly_chart(fig_pie, width='stretch')
 
     # AI Insights
     st.markdown("<div class='section-title'>💡 AI Insights</div>", unsafe_allow_html=True)
@@ -594,14 +590,89 @@ elif page == "User Analytics":
 # === RECOMMENDATIONS ===
 elif page == "Recommendations":
     st.markdown("<h1 style='color:#f1f5f9;'>🎯 Recommendations</h1>", unsafe_allow_html=True)
-    # Panggil kode rekomendasi dari versi sebelumnya (bisa di-copy-paste)
+    st.markdown("<p style='color:#94a3b8;'>Temukan anime serupa dengan Collaborative Filtering</p>")
+    with st.expander("💡 Bagaimana Sistem Bekerja"):
+        st.markdown("""
+        - **Collaborative Filtering** + **Cosine Similarity**
+        - Menganalisis pola rating dari **minimal 20 pengguna** per anime.
+        - Memberikan 10 anime dengan skor kemiripan tertinggi.
+        """)
+
+    available = df_anime[df_anime['anime_id'].isin(similarity_df.index)]
+    anime_list = sorted(available['Name'].dropna().unique())
+
+    if 'random_anime' not in st.session_state:
+        st.session_state.random_anime = None
+
+    col_select, col_random = st.columns([3, 1])
+    with col_select:
+        default_idx = 0
+        if st.session_state.random_anime in anime_list:
+            default_idx = anime_list.index(st.session_state.random_anime) + 1
+        selected = st.selectbox(
+            "🔍 Pilih Anime Favorit",
+            ["-- Pilih --"] + anime_list,
+            index=default_idx
+        )
+        if selected != "-- Pilih --":
+            st.session_state.random_anime = selected
+    with col_random:
+        if st.button("🎲 Random Anime"):
+            if anime_list:
+                st.session_state.random_anime = random.choice(anime_list)
+                st.rerun()
+
+    if selected != "-- Pilih --" and selected in anime_list:
+        info = df_anime[df_anime['Name'] == selected].iloc[0]
+        anime_id = info['anime_id']
+
+        col_poster, col_detail = st.columns([1, 2])
+        with col_poster:
+            # Placeholder poster
+            st.markdown(f"""
+            <div style="background:#7c3aed; border-radius:12px; width:200px; height:280px; display:flex; align-items:center; justify-content:center; color:white; font-size:4rem;">
+                {info['Name'][0]}
+            </div>
+            """, unsafe_allow_html=True)
+        with col_detail:
+            st.markdown(f"### {info['Name']}")
+            st.markdown(f"**Genre:** {info['Genres']}")
+            st.markdown(f"**Score:** ⭐ {info['Score']:.2f}  |  **Type:** {info['Type']}")
+            st.markdown(f"**Members:** {info['Members']:,}")
+            st.markdown(f"**Synopsis:** {info['Synopsis'][:500]}..." if pd.notna(info['Synopsis']) else "")
+
+        if anime_id in similarity_df.index:
+            sim_scores = similarity_df[anime_id].sort_values(ascending=False)
+            top_ids = sim_scores.iloc[1:11].index
+            # Ambil DataFrame dengan menyertakan anime_id
+            recs = df_anime[df_anime['anime_id'].isin(top_ids)][['anime_id', 'Name', 'Genres', 'Score', 'Type']].copy()
+            recs['Similarity'] = recs['anime_id'].map(sim_scores).fillna(0)
+            recs = recs.sort_values('Similarity', ascending=False)
+
+            st.markdown("<div class='section-title'>🎯 10 Rekomendasi Serupa</div>", unsafe_allow_html=True)
+            cols = st.columns(2)
+            for idx, (_, row) in enumerate(recs.iterrows()):
+                with cols[idx % 2]:
+                    st.markdown(f"""
+                    <div style="background:#111827; border-radius:12px; padding:1rem; border-left:4px solid #7c3aed; margin-bottom:0.8rem;">
+                        <div style="font-weight:600; color:#f1f5f9;">{row['Name']}</div>
+                        <div style="font-size:0.85rem; color:#94a3b8;">🏷️ {row['Genres']}</div>
+                        <div style="font-size:0.85rem; color:#fbbf24;">⭐ {row['Score']:.2f} · {row['Type']}</div>
+                        <div style="font-size:0.8rem; color:#a78bfa;">🔗 Similarity: {row['Similarity']:.3f}</div>
+                    </div>
+                    """, unsafe_allow_html=True)
+
+            with st.expander("📋 Tabel Rekomendasi"):
+                st.dataframe(recs.drop('anime_id', axis=1), width='stretch')
+        else:
+            st.warning("Anime ini tidak memiliki cukup data untuk rekomendasi.")
 
 # === AI INSIGHTS ===
 elif page == "AI Insights":
     st.markdown("<h1 style='color:#f1f5f9;'>💡 AI Insights</h1>", unsafe_allow_html=True)
     st.markdown("Lebih banyak insight akan segera hadir...")
 
-# === PLACEHOLDER PAGES (Ratings, Settings, Dataset Update, Report) ===
+# === PLACEHOLDER PAGES ===
 elif page in ["Ratings", "Settings", "Dataset Update", "Report Issue"]:
     st.markdown(f"<h1 style='color:#f1f5f9;'>{page}</h1>", unsafe_allow_html=True)
     st.warning(f"Halaman **{page}** sedang dalam pengembangan. Segera hadir!")
