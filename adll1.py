@@ -19,7 +19,6 @@ _original_markdown = st.markdown
 
 def _patched_markdown(body, unsafe_allow_html=False, **kwargs):
     if unsafe_allow_html and isinstance(body, str):
-        # Hilangkan indentasi berlebih agar Markdown tidak menganggapnya code block
         body = textwrap.dedent(body)
     return _original_markdown(body, unsafe_allow_html=unsafe_allow_html, **kwargs)
 
@@ -33,7 +32,7 @@ st.set_page_config(
     initial_sidebar_state="expanded"
 )
 
-# Session state
+# ===== SESSION STATE =====
 if "page" not in st.session_state:
     st.session_state.page = "Overview"
 if "favorites" not in st.session_state:
@@ -49,7 +48,7 @@ PAGE_ICONS = {
     "Favorites": "❤️", "Settings": "⚙️"
 }
 
-# Helper
+# ===== HELPER =====
 def get_base64(file_path):
     try:
         with open(file_path, "rb") as f:
@@ -68,7 +67,7 @@ def fmt_num(n):
         return f"{n/1_000:.1f}K"
     return f"{int(n):,}"
 
-# Load data
+# ===== LOAD DATA =====
 @st.cache_data
 def load_data():
     if not os.path.exists("users-details-2023.csv"):
@@ -101,7 +100,7 @@ df_anime["Score"] = df_anime["Score"].replace("UNKNOWN", mean_score).astype(floa
 with st.spinner("Building Recommendation Engine..."):
     similarity_df = build_similarity(df_score, df_anime)
 
-# Load images
+# ===== LOAD IMAGES =====
 BG_IMAGE = ""
 for ext in ["jpg", "jpeg", "png", "webp"]:
     path = f"assets/anime_bg.{ext}"
@@ -123,7 +122,7 @@ for ext in ["jpg", "jpeg", "png", "webp"]:
         AVATAR_IMAGE = get_base64(path)
         break
 
-# ---- CSS GLOBAL ----
+# ===== GLOBAL CSS =====
 st.markdown("""
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
@@ -222,7 +221,7 @@ header[data-testid="stHeader"] { background: transparent; }
 </style>
 """, unsafe_allow_html=True)
 
-# ---- DYNAMIC THEME ----
+# ===== DYNAMIC THEME =====
 if st.session_state.dark_mode:
     bg_main, bg_sidebar, card_bg, card_border, kpi_bg, text_primary, text_secondary = \
         "#0f172a", "#111827", "rgba(255,255,255,0.05)", "rgba(255,255,255,0.08)", "#131c31", "white", "#94a3b8"
@@ -254,7 +253,7 @@ st.markdown(f"""
 </style>
 """, unsafe_allow_html=True)
 
-# ---- SIDEBAR ----
+# ===== SIDEBAR =====
 with st.sidebar:
     st.markdown("""
     <div class="sidebar-logo-row">
@@ -268,7 +267,7 @@ with st.sidebar:
         st.image(f"data:image/png;base64,{SIDEBAR_IMAGE}", width=180)
     else:
         # Fallback jika gambar tidak ada
-        st.markdown('<div style="text-align:center; color:#64748b; font-size:13px;">🖼️ Sidebar Image</div>', unsafe_allow_html=True)
+        st.markdown('<div style="text-align:center; color:#94a3b8; font-size:13px;">🏔️</div>', unsafe_allow_html=True)
 
     st.markdown("---")
     page = st.radio(
@@ -293,20 +292,22 @@ with st.sidebar:
     </div>
     """, unsafe_allow_html=True)
 
-# ---- TOP NAVBAR (tanpa "Share", hanya tema + user) ----
+# ===== TOP NAVBAR (tanpa "Share") =====
 def show_topnav():
     avatar_html = f'<img src="data:image/png;base64,{AVATAR_IMAGE}">' if AVATAR_IMAGE else "🧑‍🚀"
     moon_icon = "☀️" if not st.session_state.dark_mode else "🌙"
 
-    col1, col2 = st.columns([6, 1.2])
-    with col1:
-        pass  # kosong
-    with col2:
+    # 2 kolom: kiri kosong, kanan isi
+    col_left, col_right = st.columns([6, 1.5])
+    with col_left:
+        pass
+    with col_right:
         sub1, sub2 = st.columns([1, 3], gap="small")
         with sub1:
             if st.button(moon_icon, key="theme_toggle", help="Toggle Dark/Light Theme", use_container_width=True):
                 st.session_state.dark_mode = not st.session_state.dark_mode
                 st.rerun()
+            # Styling tombol bulat
             st.markdown("""
             <style>
             div[data-testid="column"]:nth-of-type(2) div[data-testid="column"]:nth-of-type(1) button {
@@ -330,19 +331,17 @@ def show_topnav():
             """, unsafe_allow_html=True)
         with sub2:
             st.markdown(f"""
-            <div style="display:flex; align-items:center; gap:10px; background:rgba(255,255,255,0.04); border:1px solid rgba(255,255,255,0.08); padding:6px 14px 6px 6px; border-radius:999px; margin-left:4px;">
+            <div style="display:flex; align-items:center; gap:8px; background:rgba(255,255,255,0.04); border:1px solid rgba(255,255,255,0.08); padding:4px 12px 4px 4px; border-radius:999px; margin-left:2px;">
                 <div style="width:32px; height:32px; border-radius:50%; background:linear-gradient(135deg,#7c3aed,#ec4899); display:flex; align-items:center; justify-content:center; font-size:16px; overflow:hidden;">
                     {avatar_html}
                 </div>
-                <div>
-                    <div style="font-size:14px; font-weight:600; color:white;">Otaku User</div>
-                </div>
+                <div style="font-size:14px; font-weight:600; color:white;">Otaku User</div>
             </div>
             """, unsafe_allow_html=True)
 
 show_topnav()
 
-# ---- HERO FUNCTION (diperbaiki) ----
+# ===== HERO FUNCTION =====
 def show_banner(title, subtitle, description="", welcome=None, small=False):
     welcome_html = f'<div class="hero-welcome">{welcome}</div>' if welcome else ""
     desc_html = f'<div class="hero-desc">{description}</div>' if description else ""
@@ -382,7 +381,7 @@ def show_banner(title, subtitle, description="", welcome=None, small=False):
         </div>
         """, unsafe_allow_html=True)
 
-# ---- KPI ----
+# ===== KPI FUNCTION =====
 KPI_COLORS = [
     ("#7c3aed", "rgba(124,58,237,0.25)"),
     ("#ec4899", "rgba(236,72,153,0.22)"),
@@ -411,7 +410,10 @@ def kpi_card(icon, label, value, delta=None, delta_dir="up", color_idx=0):
     unsafe_allow_html=True
     )
 
-# ---- HALAMAN ----
+# ==========================================================
+# ===== PAGES (Overview, Analytics, Anime Explorer, User Analytics, Recommendations, AI Insights, Favorites, Settings) =====
+# ==========================================================
+
 if page == "Overview":
     show_banner(
         "Anime Insight AI",
@@ -1078,7 +1080,7 @@ elif page == "Settings":
         st.session_state.favorites = set()
         st.success("Settings have been reset.")
 
-# ---- FOOTER ----
+# ===== FOOTER =====
 st.markdown("<br><br>", unsafe_allow_html=True)
 st.markdown(
 """
