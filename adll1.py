@@ -1,7 +1,6 @@
 # ==========================================================
-# ANIME INSIGHT AI
+# ANIME INSIGHT AI — FINAL
 # ==========================================================
-# Imports
 import streamlit as st
 import pandas as pd
 import numpy as np
@@ -32,29 +31,30 @@ st.set_page_config(
 # ==========================================================
 if "page" not in st.session_state:
     st.session_state.page = "Overview"
-if "selected_anime" not in st.session_state:
-    st.session_state.selected_anime = None
 if "random_anime" not in st.session_state:
     st.session_state.random_anime = None
 if "image_cache" not in st.session_state:
     st.session_state.image_cache = {}
 
 # ==========================================================
-# LOAD BACKGROUND IMAGE (base64)
+# DETEKSI GAMBAR BACKGROUND (auto extension)
 # ==========================================================
 def get_base64(img_path):
-    if os.path.exists(img_path):
-        with open(img_path, "rb") as f:
-            data = f.read()
-        return base64.b64encode(data).decode()
-    return ""
+    with open(img_path, "rb") as f:
+        data = f.read()
+    return base64.b64encode(data).decode()
 
-# Jika file background tidak ada, kita pakai placeholder
-BG_IMAGE = get_base64("assets/anime_bg.jpg")
-# Jika tidak ada, gunakan background warna saja (tidak error)
+BG_IMAGE = ""
+if os.path.exists("assets"):
+    for ext in ["jpg", "jpeg", "png", "webp"]:
+        path = f"assets/anime_bg.{ext}"
+        if os.path.exists(path):
+            BG_IMAGE = get_base64(path)
+            break
+
+# Jika tidak ada, fallback ke warna solid (tidak error)
 if not BG_IMAGE:
-    # fallback: kita set CSS tanpa gambar background
-    BG_IMAGE = ""
+    BG_IMAGE = ""  # akan di-handle di CSS
 
 # ==========================================================
 # LOAD DATA
@@ -72,6 +72,7 @@ def load_data():
 
 with st.spinner("Loading Anime Database..."):
     df_anime, df_user, df_score = load_data()
+st.write(df_anime.columns.tolist())
 
 # ==========================================================
 # DATA CLEANING
@@ -98,17 +99,19 @@ with st.spinner("Building Recommendation Engine..."):
     similarity_df = build_similarity()
 
 # ==========================================================
-# FUNCTION: GET ANIME IMAGE FROM API (dengan cache)
+# MULTI-SOURCE IMAGE FETCHER
 # ==========================================================
-@st.cache_data(ttl=86400)  # cache 1 hari
+@st.cache_data(ttl=86400)
 def fetch_anime_image(title):
-    """Ambil URL cover dari AniAPI (gratis, tanpa API key)"""
+    """Ambil URL cover dari 3 API dengan fallback"""
     if title in st.session_state.image_cache:
         return st.session_state.image_cache[title]
+
+    clean_title = title.replace(" ", "%20")
+
+    # 1. AniAPI
     try:
-        # Bersihkan judul untuk query
-        query = title.replace(" ", "+")
-        url = f"https://api.aniapi.com/v1/anime?title={query}&limit=1"
+        url = f"https://api.aniapi.com/v1/anime?title={clean_title}&limit=1"
         resp = requests.get(url, timeout=5)
         if resp.status_code == 200:
             data = resp.json()
@@ -117,35 +120,80 @@ def fetch_anime_image(title):
                 if img:
                     st.session_state.image_cache[title] = img
                     return img
-    except Exception:
+    except:
         pass
-    # Fallback: inisial + gradien (tidak return None, tapi kita handle di UI)
+
+    # 2. AniList (GraphQL)
+    try:
+        query = """
+        query ($search: String) {
+            Media(search: $search, type: ANIME) {
+                coverImage { large }
+            }
+        }
+        """
+        variables = {"search": title}
+        resp = requests.post(
+            "https://graphql.anilist.co",
+            json={"query": query, "variables": variables},
+            timeout=5
+        )
+        if resp.status_code == 200:
+            data = resp.json()
+            img = data.get("data", {}).get("Media", {}).get("coverImage", {}).get("large")
+            if img:
+                st.session_state.image_cache[title] = img
+                return img
+    except:
+        pass
+
+    # 3. Jikan (MyAnimeList)
+    try:
+        url = f"https://api.jikan.moe/v4/anime?q={clean_title}&limit=1"
+        resp = requests.get(url, timeout=5)
+        if resp.status_code == 200:
+            data = resp.json()
+            if data.get("data") and len(data["data"]) > 0:
+                img = data["data"][0].get("images", {}).get("jpg", {}).get("image_url")
+                if img:
+                    st.session_state.image_cache[title] = img
+                    return img
+    except:
+        pass
+
     return None
 
 # ==========================================================
-# PREMIUM CSS (dengan active menu)
+# PREMIUM CSS
 # ==========================================================
-st.markdown(
-    f"""
-    <style>
-    /* ---- BACKGROUND ---- */
-    .stApp {{
-        background: #0b1120;
-        color: white;
-    }}
-    /* Jika ada gambar background */
-    {f"""
-    .stApp {{
-        background:
-            linear-gradient(rgba(3,7,18,0.92), rgba(3,7,18,0.92)),
-            url("data:image/jpeg;base64,{BG_IMAGE}");
-        background-size: cover;
-        background-position: center;
-        background-attachment: fixed;
-    }}
-    """ if BG_IMAGE else ""}
+bg_style = f"""
+.stApp {{
+    background:
+        linear-gradient(rgba(3,7,18,0.92), rgba(3,7,18,0.92)),
+        url("data:image/jpeg;base64,{BG_IMAGE}");
+    background-size: cover;
+    background-position: center;
+    background-attachment: fixed;
+    color: white;
+}}
+""" if BG_IMAGE else """
+.stApp {
+    background: #0b1120;
+    color: white;
+}
+"""
 
-    /* ---- SIDEBAR ---- */
+st.markdown(f"""
+<style>
+    /* Global */
+    {bg_style}
+    .block-container {{
+        padding-top: 2rem;
+        padding-left: 2rem;
+        padding-right: 2rem;
+        padding-bottom: 2rem;
+    }}
+    /* Sidebar */
     section[data-testid="stSidebar"] {{
         background: #0b1120;
         border-right: 1px solid rgba(255,255,255,0.05);
@@ -165,18 +213,8 @@ st.markdown(
         color: #94a3b8;
         letter-spacing: 2px;
     }}
-    .sidebar-divider {{
-        margin: 20px 0;
-        border-top: 1px solid rgba(255,255,255,0.05);
-    }}
-    /* ---- ACTIVE MENU ---- */
-    .active-menu {{
-        background: #7c3aed !important;
-        border-radius: 10px;
-        color: white !important;
-        font-weight: 600;
-    }}
-    .stButton button {{
+    /* Active menu */
+    div[data-testid="stButton"] button {{
         width: 100%;
         background: transparent;
         border: none;
@@ -187,19 +225,16 @@ st.markdown(
         font-size: 16px;
         transition: 0.2s;
     }}
-    .stButton button:hover {{
+    div[data-testid="stButton"] button:hover {{
         background: rgba(255,255,255,0.05);
         color: white;
     }}
-    /* ---- CARDS ---- */
-    .glass-card {{
-        background: rgba(255,255,255,0.05);
-        backdrop-filter: blur(15px);
-        border: 1px solid rgba(255,255,255,0.08);
-        border-radius: 20px;
-        padding: 20px;
-        box-shadow: 0 8px 30px rgba(0,0,0,0.3);
+    .stButton button.active-menu {{
+        background: #7c3aed !important;
+        color: white !important;
+        font-weight: 600;
     }}
+    /* KPI Cards */
     .kpi-card {{
         background: rgba(255,255,255,0.05);
         backdrop-filter: blur(20px);
@@ -232,10 +267,10 @@ st.markdown(
         margin: 20px 0 20px 0;
         color: white;
     }}
-    /* ---- HERO ---- */
+    /* Hero Banner */
     .hero-container {{
         position: relative;
-        height: 350px;
+        height: 320px;
         overflow: hidden;
         border-radius: 25px;
         margin-bottom: 25px;
@@ -257,29 +292,23 @@ st.markdown(
         justify-content: center;
         background: linear-gradient(90deg, rgba(5,8,20,0.95) 0%, rgba(5,8,20,0.70) 40%, rgba(5,8,20,0.10) 100%);
     }}
-    .hero-sub {{
-        font-size: 1.2rem;
-        color: #d8b4fe;
-        font-weight: 600;
-    }}
-    .hero-title {{
-        font-size: 3.5rem;
+    .hero-overlay .title {{
+        font-size: 3.2rem;
         font-weight: 800;
         color: white;
         line-height: 1.1;
     }}
-    .hero-desc {{
-        font-size: 1.3rem;
-        color: white;
+    .hero-overlay .sub {{
+        font-size: 1.2rem;
+        color: #d8b4fe;
+        font-weight: 600;
+    }}
+    .hero-overlay .desc {{
+        font-size: 1.1rem;
+        color: #cbd5e1;
         margin-top: 5px;
     }}
-    .hero-small {{
-        font-size: 1rem;
-        color: #cbd5e1;
-        margin-top: 10px;
-        max-width: 600px;
-    }}
-    /* ---- POSTER PLACEHOLDER ---- */
+    /* Poster placeholder */
     .poster-initial {{
         aspect-ratio: 2/3;
         border-radius: 16px;
@@ -289,8 +318,9 @@ st.markdown(
         font-size: 4rem;
         font-weight: 700;
         color: white;
+        width: 100%;
     }}
-    /* ---- FOOTER ---- */
+    /* Footer */
     .footer {{
         text-align: center;
         padding: 20px;
@@ -299,18 +329,32 @@ st.markdown(
         border-top: 1px solid rgba(255,255,255,0.05);
         margin-top: 30px;
     }}
-    /* ---- PLOTLY ---- */
-    .js-plotly-plot {{
-        border-radius: 20px;
-        overflow: hidden;
+    .footer a {{
+        color: #d8b4fe;
+        text-decoration: none;
     }}
-    </style>
-    """,
-    unsafe_allow_html=True,
-)
+</style>
+""", unsafe_allow_html=True)
 
 # ==========================================================
-# PROFESSIONAL SIDEBAR dengan ACTIVE STATE
+# GLOBAL HERO BANNER FUNCTION
+# ==========================================================
+def show_banner(title, subtitle="", desc=""):
+    """Tampilkan hero banner dengan judul berbeda per halaman"""
+    img_tag = f'<img src="data:image/jpeg;base64,{BG_IMAGE}" alt="banner">' if BG_IMAGE else ''
+    st.markdown(f"""
+    <div class="hero-container">
+        {img_tag}
+        <div class="hero-overlay">
+            <div class="title">{title}</div>
+            <div class="sub">{subtitle}</div>
+            <div class="desc">{desc}</div>
+        </div>
+    </div>
+    """, unsafe_allow_html=True)
+
+# ==========================================================
+# SIDEBAR (dengan active state)
 # ==========================================================
 with st.sidebar:
     st.markdown("""
@@ -321,26 +365,21 @@ with st.sidebar:
     """, unsafe_allow_html=True)
     st.divider()
 
-    # Daftar menu dengan ikon
     menu_items = [
-        ("🏠 Overview", "Overview"),
-        ("🎬 Anime Explorer", "Anime Explorer"),
-        ("📊 Analytics", "Analytics"),
-        ("👥 User Analytics", "User Analytics"),
-        ("🎯 Recommendations", "Recommendations"),
-        ("💡 AI Insights", "AI Insights"),
+        ("🏠 Overview", "Overview", "Welcome to Dashboard"),
+        ("🎬 Anime Explorer", "Anime Explorer", "Search & Filter"),
+        ("📊 Analytics", "Analytics", "Deep Insights"),
+        ("👥 User Analytics", "User Analytics", "User Demographics"),
+        ("🎯 Recommendations", "Recommendations", "AI-Powered Picks"),
+        ("💡 AI Insights", "AI Insights", "Smart Summaries"),
     ]
 
-    for label, key in menu_items:
-        # Tentukan kelas aktif
-        active_class = "active-menu" if st.session_state.page == key else ""
-        # Tombol dengan custom styling melalui HTML (karena button tidak bisa diberi class langsung)
-        # Kita gunakan st.button dengan key, lalu CSS menargetkan berdasarkan key?
-        # Lebih praktis: kita buat button biasa dan tambahkan marker CSS jika aktif.
+    for label, key, _ in menu_items:
+        active = "active-menu" if st.session_state.page == key else ""
         if st.button(label, key=f"btn_{key}", use_container_width=True):
             st.session_state.page = key
             st.rerun()
-        # Tambahkan CSS untuk menyorot tombol aktif (target berdasarkan key)
+        # highlight lewat CSS
         if st.session_state.page == key:
             st.markdown(
                 f"""
@@ -359,40 +398,24 @@ with st.sidebar:
     st.divider()
     st.markdown(
         """
-        <div style="text-align:center">
-            ⭐ Premium Dashboard<br>
-            <span style="color:#94a3b8; font-size:12px;">Powered by Streamlit</span>
+        <div style="text-align:center; color:#94a3b8; font-size:12px;">
+            ⭐ Premium Dashboard<br>Powered by Streamlit
         </div>
         """,
         unsafe_allow_html=True,
     )
 
 # ==========================================================
-# ACTIVE PAGE
+# PAGE: OVERVIEW
 # ==========================================================
-page = st.session_state.page
-
-# ==========================================================
-# PAGE: OVERVIEW (dengan search berfungsi)
-# ==========================================================
-if page == "Overview":
-    # HERO BANNER
-    st.markdown(
-        f"""
-        <div class="hero-container">
-            <img src="data:image/jpeg;base64,{BG_IMAGE}" alt="hero">
-            <div class="hero-overlay">
-                <div class="hero-sub">👋 Welcome Back Anime Explorer</div>
-                <div class="hero-title">Anime Insight AI</div>
-                <div class="hero-desc">Discover • Analyze • Recommend</div>
-                <div class="hero-small">Explore anime, uncover insights, and get personalized recommendations powered by AI.</div>
-            </div>
-        </div>
-        """,
-        unsafe_allow_html=True,
+if st.session_state.page == "Overview":
+    show_banner(
+        title="Welcome Back, Anime Explorer!",
+        subtitle="Anime Insight AI",
+        desc="Discover • Analyze • Recommend — powered by Collaborative Filtering."
     )
 
-    # SEARCH BAR (berfungsi)
+    # Search bar
     search_query = st.text_input("🔍 Search Anime", placeholder="Search anime, genre, studio...")
     if search_query:
         result = df_anime[df_anime["Name"].str.contains(search_query, case=False, na=False)]
@@ -402,15 +425,15 @@ if page == "Overview":
         else:
             st.info("No anime found")
 
-    # KPI CARDS
+    # KPI
     total_anime = len(df_anime)
     total_users = len(df_user)
     avg_score = round(df_anime["Score"].mean(), 2)
     total_genres = df_anime[df_anime["Genres"] != "UNKNOWN"]["Genres"].str.split(", ").explode().nunique()
     total_ratings = len(df_score)
 
-    col1, col2, col3, col4, col5 = st.columns(5)
-    with col1:
+    c1, c2, c3, c4, c5 = st.columns(5)
+    with c1:
         st.markdown(f"""
         <div class="kpi-card">
             <div class="kpi-value">{total_anime:,}</div>
@@ -418,7 +441,7 @@ if page == "Overview":
             <div class="kpi-growth">+12.4%</div>
         </div>
         """, unsafe_allow_html=True)
-    with col2:
+    with c2:
         st.markdown(f"""
         <div class="kpi-card">
             <div class="kpi-value">{total_users:,}</div>
@@ -426,7 +449,7 @@ if page == "Overview":
             <div class="kpi-growth">+8.7%</div>
         </div>
         """, unsafe_allow_html=True)
-    with col3:
+    with c3:
         st.markdown(f"""
         <div class="kpi-card">
             <div class="kpi-value">{avg_score}</div>
@@ -434,7 +457,7 @@ if page == "Overview":
             <div class="kpi-growth">+3.1%</div>
         </div>
         """, unsafe_allow_html=True)
-    with col4:
+    with c4:
         st.markdown(f"""
         <div class="kpi-card">
             <div class="kpi-value">{total_genres}</div>
@@ -442,7 +465,7 @@ if page == "Overview":
             <div class="kpi-growth" style="color:#94a3b8;">Stable</div>
         </div>
         """, unsafe_allow_html=True)
-    with col5:
+    with c5:
         st.markdown(f"""
         <div class="kpi-card">
             <div class="kpi-value">{total_ratings:,}</div>
@@ -453,13 +476,13 @@ if page == "Overview":
 
     st.markdown("<br>", unsafe_allow_html=True)
 
-    # SCORE DISTRIBUTION
+    # Score distribution
     st.markdown('<div class="section-title">📊 Anime Score Distribution</div>', unsafe_allow_html=True)
     fig = px.histogram(df_anime, x="Score", nbins=30)
     fig.update_layout(paper_bgcolor="rgba(0,0,0,0)", plot_bgcolor="rgba(0,0,0,0)", font_color="white", height=400)
     st.plotly_chart(fig, use_container_width=True)
 
-    # TOP RATED + SCORE BY TYPE
+    # Top Rated + Score by Type
     left, right = st.columns([3, 2])
     with left:
         st.markdown('<div class="section-title">🏆 Top Rated Anime</div>', unsafe_allow_html=True)
@@ -472,24 +495,22 @@ if page == "Overview":
         fig2.update_layout(paper_bgcolor="rgba(0,0,0,0)", plot_bgcolor="rgba(0,0,0,0)", font_color="white", showlegend=False)
         st.plotly_chart(fig2, use_container_width=True)
 
-    # ANIME OF THE DAY
-    st.markdown('<div class="section-title">⭐ Anime Of The Day</div>', unsafe_allow_html=True)
+    # Anime of the Day
+    st.markdown('<div class="section-title">⭐ Anime of the Day</div>', unsafe_allow_html=True)
     anime_day = df_anime.sample(1).iloc[0]
-    st.markdown(f"""
-    ### {anime_day["Name"]}
-    ⭐ Score: {anime_day["Score"]}  |  🎬 Type: {anime_day["Type"]}  |  🏷 Genre: {anime_day["Genres"]}
-    """)
+    st.markdown(f"### {anime_day['Name']}")
+    st.markdown(f"⭐ Score: {anime_day['Score']:.2f}  |  🎬 Type: {anime_day['Type']}  |  🏷 Genre: {anime_day['Genres']}")
     if pd.notna(anime_day["Synopsis"]):
         st.info(anime_day["Synopsis"][:400])
 
-    # GENRE DISTRIBUTION
+    # Genre Pie
     st.markdown('<div class="section-title">🎯 Genre Distribution</div>', unsafe_allow_html=True)
     genre_counts = df_anime[df_anime["Genres"] != "UNKNOWN"]["Genres"].str.split(", ").explode().value_counts().head(10)
     fig3 = px.pie(values=genre_counts.values, names=genre_counts.index)
     fig3.update_layout(paper_bgcolor="rgba(0,0,0,0)", font_color="white", height=450)
     st.plotly_chart(fig3, use_container_width=True)
 
-    # AI INSIGHTS
+    # AI Insights
     st.markdown('<div class="section-title">💡 AI Insights</div>', unsafe_allow_html=True)
     top_genre = genre_counts.index[0]
     top_anime_name = df_anime.nlargest(1, "Score")["Name"].iloc[0]
@@ -502,11 +523,14 @@ if page == "Overview":
         st.success("📈 Recommendation Engine siap digunakan.")
 
 # ==========================================================
-# PAGE: ANIME EXPLORER (dengan poster API)
+# PAGE: ANIME EXPLORER
 # ==========================================================
-elif page == "Anime Explorer":
-    st.markdown('<div class="section-title">🎬 Anime Explorer</div>', unsafe_allow_html=True)
-    st.caption("Explore anime database with advanced filtering and search.")
+elif st.session_state.page == "Anime Explorer":
+    show_banner(
+        title="🎬 Anime Explorer",
+        subtitle="Discover Your Next Favorite",
+        desc="Search, filter, and explore thousands of anime titles."
+    )
 
     col1, col2, col3, col4 = st.columns(4)
     with col1:
@@ -519,7 +543,6 @@ elif page == "Anime Explorer":
     with col4:
         score_range = st.slider("⭐ Score", 0.0, 10.0, (6.0, 10.0))
 
-    # Filtering
     filtered = df_anime.copy()
     if search_text:
         filtered = filtered[filtered["Name"].str.contains(search_text, case=False, na=False)]
@@ -531,42 +554,41 @@ elif page == "Anime Explorer":
 
     st.success(f"Found {len(filtered):,} Anime")
 
-    # Quick stats
-    stat1, stat2, stat3, stat4 = st.columns(4)
-    stat1.metric("Anime", len(filtered))
-    stat2.metric("Average Score", round(filtered["Score"].mean(), 2))
-    stat3.metric("Highest Score", round(filtered["Score"].max(), 2))
-    stat4.metric("Types", filtered["Type"].nunique())
+    # Stats
+    s1, s2, s3, s4 = st.columns(4)
+    s1.metric("Anime", len(filtered))
+    s2.metric("Avg Score", round(filtered["Score"].mean(), 2))
+    s3.metric("Highest Score", round(filtered["Score"].max(), 2))
+    s4.metric("Types", filtered["Type"].nunique())
 
     st.markdown("<br>", unsafe_allow_html=True)
 
-    # Anime Gallery dengan poster API
+    # Gallery with posters
     st.markdown('<div class="section-title">🌟 Anime Gallery</div>', unsafe_allow_html=True)
     preview = filtered.head(12)
     cols = st.columns(4)
     for idx, (_, row) in enumerate(preview.iterrows()):
         with cols[idx % 4]:
-            # Coba ambil gambar dari API
             img_url = fetch_anime_image(row["Name"])
             if img_url:
                 st.image(img_url, use_container_width=True)
             else:
-                # Fallback: inisial dengan gradien berdasarkan skor
-                if row["Score"] >= 8:
+                score = row["Score"]
+                if score >= 8:
                     grad = "linear-gradient(135deg, #7c3aed, #6d28d9)"
-                elif row["Score"] >= 7:
+                elif score >= 7:
                     grad = "linear-gradient(135deg, #22c55e, #16a34a)"
                 else:
                     grad = "linear-gradient(135deg, #f59e0b, #d97706)"
                 st.markdown(f"""
                 <div class="poster-initial" style="background:{grad};">
-                    {row["Name"][0].upper()}
+                    {row['Name'][0].upper()}
                 </div>
                 """, unsafe_allow_html=True)
             st.caption(f"**{row['Name'][:30]}**")
             st.caption(f"⭐ {row['Score']:.2f}  •  {row['Type']}")
 
-    # Top Genres + Score Distribution
+    # Top genres & score distribution
     left, right = st.columns(2)
     with left:
         st.markdown('<div class="section-title">🏷 Top Genres</div>', unsafe_allow_html=True)
@@ -585,28 +607,22 @@ elif page == "Anime Explorer":
     display_cols = ["Name", "Genres", "Type", "Score", "Members"]
     st.dataframe(filtered[display_cols].sort_values("Score", ascending=False), use_container_width=True, height=600)
 
-    # Top 10
-    st.markdown('<div class="section-title">🏆 Top 10 Anime</div>', unsafe_allow_html=True)
-    top10 = filtered.nlargest(10, "Score")[["Name", "Score"]]
-    st.dataframe(top10, use_container_width=True, hide_index=True)
-
 # ==========================================================
-# PAGE: ANALYTICS (dengan heatmap terbatas)
+# PAGE: ANALYTICS
 # ==========================================================
-elif page == "Analytics":
-    st.markdown('<div class="section-title">📈 Analytics Dashboard</div>', unsafe_allow_html=True)
-    st.caption("Deep insights and exploratory data analysis of anime dataset.")
+elif st.session_state.page == "Analytics":
+    show_banner(
+        title="📊 Analytics Dashboard",
+        subtitle="Deep Insights & Trends",
+        desc="Explore statistical patterns and correlations in anime data."
+    )
 
-    # KPI
     c1, c2, c3, c4 = st.columns(4)
     c1.metric("Highest Score", round(df_anime["Score"].max(), 2))
-    c2.metric("Average Members", f"{int(df_anime['Members'].mean()):,}")
+    c2.metric("Avg Members", f"{int(df_anime['Members'].mean()):,}")
     c3.metric("Anime Types", df_anime["Type"].nunique())
-    c4.metric("Genres", df_anime[df_anime["Genres"] != "UNKNOWN"]["Genres"].str.split(", ").explode().nunique())
+    c4.metric("Total Genres", df_anime[df_anime["Genres"] != "UNKNOWN"]["Genres"].str.split(", ").explode().nunique())
 
-    st.markdown("<br>", unsafe_allow_html=True)
-
-    # Score Distribution
     left, right = st.columns(2)
     with left:
         st.markdown('<div class="section-title">⭐ Score Distribution</div>', unsafe_allow_html=True)
@@ -620,10 +636,9 @@ elif page == "Analytics":
         fig2.update_layout(paper_bgcolor="rgba(0,0,0,0)", plot_bgcolor="rgba(0,0,0,0)", font_color="white", showlegend=False, height=400)
         st.plotly_chart(fig2, use_container_width=True)
 
-    # Popularity & Members
     left, right = st.columns(2)
     with left:
-        st.markdown('<div class="section-title">🔥 Most Popular Anime</div>', unsafe_allow_html=True)
+        st.markdown('<div class="section-title">🔥 Most Popular</div>', unsafe_allow_html=True)
         popular = df_anime[df_anime["Popularity"] > 0].nsmallest(15, "Popularity")
         fig3 = px.bar(popular, x="Popularity", y="Name", orientation="h")
         fig3.update_layout(paper_bgcolor="rgba(0,0,0,0)", plot_bgcolor="rgba(0,0,0,0)", font_color="white", height=500)
@@ -642,10 +657,9 @@ elif page == "Analytics":
     fig5.update_layout(paper_bgcolor="rgba(0,0,0,0)", plot_bgcolor="rgba(0,0,0,0)", font_color="white", height=600)
     st.plotly_chart(fig5, use_container_width=True)
 
-    # Correlation Heatmap (terbatas)
+    # Heatmap
     st.markdown('<div class="section-title">🌡 Correlation Heatmap</div>', unsafe_allow_html=True)
-    # Pilih kolom numerik yang penting
-    selected_cols = ["Score", "Members", "Popularity", "Rank"]  # sesuaikan dengan kolom yang ada
+    selected_cols = ["Score", "Members", "Popularity", "Rank"]
     available_cols = [c for c in selected_cols if c in df_anime.columns]
     if len(available_cols) > 1:
         corr = df_anime[available_cols].corr()
@@ -653,7 +667,7 @@ elif page == "Analytics":
         fig6.update_layout(height=500)
         st.plotly_chart(fig6, use_container_width=True)
     else:
-        st.info("Tidak cukup kolom numerik untuk heatmap.")
+        st.info("Not enough numeric columns for heatmap.")
 
     # WordCloud
     st.markdown('<div class="section-title">☁ Genre WordCloud</div>', unsafe_allow_html=True)
@@ -664,11 +678,9 @@ elif page == "Analytics":
         ax.imshow(wc)
         ax.axis("off")
         st.pyplot(fig_wc)
-    else:
-        st.info("Tidak ada genre untuk word cloud.")
 
     # Radar
-    st.markdown('<div class="section-title">🕸 Dataset Radar Profile</div>', unsafe_allow_html=True)
+    st.markdown('<div class="section-title">🕸 Dataset Radar</div>', unsafe_allow_html=True)
     if "Score" in df_anime.columns and "Members" in df_anime.columns:
         radar_categories = ["Score", "Members (log)"]
         radar_values = [df_anime["Score"].mean(), np.log1p(df_anime["Members"].mean())]
@@ -676,28 +688,29 @@ elif page == "Analytics":
         fig_radar.add_trace(go.Scatterpolar(r=radar_values, theta=radar_categories, fill="toself"))
         fig_radar.update_layout(polar=dict(radialaxis=dict(visible=True)), paper_bgcolor="rgba(0,0,0,0)", font_color="white", height=500)
         st.plotly_chart(fig_radar, use_container_width=True)
-    else:
-        st.info("Radar chart membutuhkan kolom Score dan Members.")
 
-    # Data Preview
+    # Data preview
     st.markdown('<div class="section-title">📋 Dataset Preview</div>', unsafe_allow_html=True)
     st.dataframe(df_anime.head(100), use_container_width=True, height=500)
 
 # ==========================================================
-# PAGE: USER ANALYTICS (dengan case-insensitive gender & Birthday check)
+# PAGE: USER ANALYTICS
 # ==========================================================
-elif page == "User Analytics":
-    st.markdown('<div class="section-title">👥 User Analytics</div>', unsafe_allow_html=True)
+elif st.session_state.page == "User Analytics":
+    show_banner(
+        title="👥 User Analytics",
+        subtitle="Who Watches Anime?",
+        desc="Demographics, locations, and age distribution of anime fans."
+    )
 
     total_users = len(df_user)
     gender_count = df_user["Gender"].dropna().value_counts()
-    # Case‑insensitive counts
     male_count = gender_count[gender_count.index.str.contains("male", case=False, na=False)].sum()
     female_count = gender_count[gender_count.index.str.contains("female", case=False, na=False)].sum()
     total_country = df_user["Location"].dropna().nunique()
 
     c1, c2, c3, c4 = st.columns(4)
-    c1.metric("Users", f"{total_users:,}")
+    c1.metric("Total Users", f"{total_users:,}")
     c2.metric("Countries", total_country)
     c3.metric("Male", male_count)
     c4.metric("Female", female_count)
@@ -707,11 +720,10 @@ elif page == "User Analytics":
         fig = px.pie(values=gender_count.values, names=gender_count.index, title="Gender Distribution")
         st.plotly_chart(fig, use_container_width=True)
     with right:
-        location_count = df_user["Location"].value_counts().head(15)
-        fig2 = px.bar(x=location_count.values, y=location_count.index, orientation="h", title="Top Locations")
+        loc_count = df_user["Location"].value_counts().head(15)
+        fig2 = px.bar(x=loc_count.values, y=loc_count.index, orientation="h", title="Top Locations")
         st.plotly_chart(fig2, use_container_width=True)
 
-    # Age distribution (jika kolom Birthday ada)
     if "Birthday" in df_user.columns:
         def calc_age(birth):
             try:
@@ -726,15 +738,19 @@ elif page == "User Analytics":
             fig3 = px.histogram(ages, nbins=25, title="Age Distribution")
             st.plotly_chart(fig3, use_container_width=True)
         else:
-            st.info("Tidak ada data usia yang valid.")
+            st.info("No valid age data.")
     else:
-        st.info("Kolom Birthday tidak tersedia dalam dataset.")
+        st.info("Birthday column not available.")
 
 # ==========================================================
-# PAGE: RECOMMENDATIONS (Netflix 5 kolom + poster API)
+# PAGE: RECOMMENDATIONS (dengan poster + 5 kolom)
 # ==========================================================
-elif page == "Recommendations":
-    st.markdown('<div class="section-title">🎯 Anime Recommendation Engine</div>', unsafe_allow_html=True)
+elif st.session_state.page == "Recommendations":
+    show_banner(
+        title="🎯 Recommendation Engine",
+        subtitle="AI-Powered Personalized Picks",
+        desc="Find your next favorite anime using Collaborative Filtering."
+    )
 
     available = df_anime[df_anime["anime_id"].isin(similarity_df.index)]
     anime_list = sorted(available["Name"].dropna().unique())
@@ -743,15 +759,14 @@ elif page == "Recommendations":
     with col1:
         selected = st.selectbox("Choose Anime", anime_list, index=0)
     with col2:
-        st.write("")  # spacer
+        st.write("")
         if st.button("🎲 Random", use_container_width=True):
             st.session_state.random_anime = random.choice(anime_list)
             st.rerun()
 
-    # Jika ada random_anime dari session, override
     if st.session_state.random_anime and st.session_state.random_anime in anime_list:
         selected = st.session_state.random_anime
-        st.session_state.random_anime = None  # reset agar tidak terus-terusan
+        st.session_state.random_anime = None  # reset
 
     if selected:
         info = df_anime[df_anime["Name"] == selected].iloc[0]
@@ -781,55 +796,54 @@ elif page == "Recommendations":
                     if img_url:
                         st.image(img_url, use_container_width=True)
                     else:
-                        # Inisial dengan gradien
-                        if row["Score"] >= 8:
+                        score = row["Score"]
+                        if score >= 8:
                             grad = "linear-gradient(135deg, #7c3aed, #6d28d9)"
-                        elif row["Score"] >= 7:
+                        elif score >= 7:
                             grad = "linear-gradient(135deg, #22c55e, #16a34a)"
                         else:
                             grad = "linear-gradient(135deg, #f59e0b, #d97706)"
                         st.markdown(f"""
                         <div class="poster-initial" style="background:{grad};">
-                            {row["Name"][0].upper()}
+                            {row['Name'][0].upper()}
                         </div>
                         """, unsafe_allow_html=True)
                     st.caption(f"**{row['Name'][:20]}**")
                     st.caption(f"⭐ {row['Score']:.2f}  •  {row['Type']}")
                     st.caption(f"🔗 Similarity: {row['Similarity']:.3f}")
 
-            # Tabel detail
             st.markdown("---")
             st.dataframe(recs[["Name", "Genres", "Score", "Similarity"]], use_container_width=True)
 
         else:
-            st.warning("Anime ini tidak memiliki data similarity.")
+            st.warning("This anime does not have enough rating data for recommendations.")
 
 # ==========================================================
 # PAGE: AI INSIGHTS
 # ==========================================================
-elif page == "AI Insights":
-    st.markdown('<div class="section-title">💡 AI Insights</div>', unsafe_allow_html=True)
+elif st.session_state.page == "AI Insights":
+    show_banner(
+        title="💡 AI Insights",
+        subtitle="Smart Summaries from Data",
+        desc="Key takeaways and interesting patterns discovered in the dataset."
+    )
+
     top_genre = df_anime[df_anime["Genres"] != "UNKNOWN"]["Genres"].str.split(", ").explode().value_counts().idxmax()
     top_anime = df_anime.nlargest(1, "Score")["Name"].iloc[0]
-    st.success(f"🔥 Most dominant genre: {top_genre}")
-    st.success(f"⭐ Highest rated anime: {top_anime}")
-    st.success("📈 Users tend to prefer high-score fantasy anime.")
-    st.success("🎯 Recommendation Engine is ready for deployment.")
-    st.success("🚀 Dashboard analytics generated successfully.")
+    st.success(f"🔥 Most dominant genre: **{top_genre}**")
+    st.success(f"⭐ Highest rated anime: **{top_anime}**")
+    st.success("📈 Users who watch Fantasy tend to give higher ratings.")
+    st.success("🎯 Recommendation Engine ready to serve.")
+    st.success("🚀 Dashboard analytics successfully generated.")
 
 # ==========================================================
 # FOOTER
 # ==========================================================
 st.markdown("---")
-st.markdown(
-    """
-    <div class="footer">
-        🎌 Anime Insight AI<br>
-        Discover • Analyze • Recommend<br><br>
-        Built with Streamlit, Plotly, Scikit-Learn<br>
-        Data Source: MyAnimeList 2023<br><br>
-        © 2026 Anime Insight AI
-    </div>
-    """,
-    unsafe_allow_html=True
-)
+st.markdown("""
+<div class="footer">
+    🎌 Anime Insight AI — Discover • Analyze • Recommend<br>
+    Built with Streamlit, Plotly, Scikit-Learn • Data: MyAnimeList 2023<br>
+    © 2026 Anime Insight AI
+</div>
+""", unsafe_allow_html=True)
