@@ -719,7 +719,7 @@ with st.sidebar:
     """, unsafe_allow_html=True)
 
     if SIDEBAR_IMAGE:
-        st.image(f"data:image/png;base64,{SIDEBAR_IMAGE}")
+        st.image(f"data:image/png;base64,{SIDEBAR_IMAGE}", width=250)   # ukuran diatur
 
     st.markdown("---")
 
@@ -1030,19 +1030,23 @@ elif page == "Analytics":
 
     with right:
         st.markdown('<div class="section-title">🏆 Top Anime by Score</div>', unsafe_allow_html=True)
-        top10 = df_anime.sort_values("Score", ascending=False).head(5)
-        rows_html = ""
-        for i, (_, row) in enumerate(top10.iterrows()):
-            rows_html += f"""
-            <div style="display:flex; justify-content:space-between; align-items:center; padding:8px 0; border-bottom:1px solid rgba(255,255,255,0.06);">
-                <div style="display:flex; align-items:center; gap:10px;">
-                    <span style="color:#94a3b8; font-weight:700; width:18px;">{i+1}</span>
-                    <span style="font-size:13.5px;">{row['Name'][:26]}</span>
-                </div>
-                <span style="color:#fbbf24; font-weight:700; font-size:13.5px;">{row['Score']}</span>
-            </div>
-            """
-        st.markdown(f'<div class="glass-card">{rows_html}</div>', unsafe_allow_html=True)
+        # --- OPSI 2: Menggunakan st.dataframe ---
+        top10 = df_anime.sort_values("Score", ascending=False).head(10)[["Name", "Score", "Type", "Members"]]
+        top10 = top10.reset_index(drop=True)
+        top10.index = top10.index + 1
+        top10.index.name = "Rank"
+        with st.container():
+            st.markdown('<div class="glass-card">', unsafe_allow_html=True)
+            st.dataframe(
+                top10,
+                use_container_width=True,
+                column_config={
+                    "Score": st.column_config.NumberColumn("Score", format="%.2f"),
+                    "Members": st.column_config.NumberColumn("Members", format=","),
+                },
+                height=380,
+            )
+            st.markdown('</div>', unsafe_allow_html=True)
 
     left,right = st.columns(2)
     with left:
