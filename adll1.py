@@ -1,6 +1,6 @@
 # ==========================================================
 # ANIME INSIGHT AI
-# Full Dashboard - Streamlit
+# Full Dashboard - Streamlit (with Dark/Light Toggle)
 # ==========================================================
 
 # ==========================================================
@@ -46,7 +46,7 @@ if "favorites" not in st.session_state:
     st.session_state.favorites = set()
 
 if "dark_mode" not in st.session_state:
-    st.session_state.dark_mode = True
+    st.session_state.dark_mode = True   # default dark
 
 PAGES = [
     "Overview",
@@ -167,7 +167,7 @@ for ext in ["jpg", "jpeg", "png", "webp"]:
         break
 
 # ==========================================================
-# GLOBAL CSS
+# GLOBAL CSS (static)
 # ==========================================================
 
 st.markdown(
@@ -328,7 +328,7 @@ SIDEBAR
 }}
 
 .sidebar-title {{
-    font-size:24px;
+    font-size:28px;               /* diperbesar */
     font-weight:800;
     background: linear-gradient(135deg, #c084fc, #f472b6);
     -webkit-background-clip: text;
@@ -706,6 +706,74 @@ unsafe_allow_html=True
 )
 
 # ==========================================================
+# DYNAMIC THEME CSS (overrides based on dark_mode)
+# ==========================================================
+
+# Tentukan warna berdasarkan mode
+if st.session_state.dark_mode:
+    bg_main = "#0f172a"
+    bg_sidebar = "#111827"
+    card_bg = "rgba(255,255,255,0.05)"
+    card_border = "rgba(255,255,255,0.08)"
+    kpi_bg = "#131c31"
+    text_primary = "white"
+    text_secondary = "#94a3b8"
+    text_hero = "white"
+    text_subhero = "#e2e8f0"
+else:
+    bg_main = "#f1f5f9"
+    bg_sidebar = "#e2e8f0"
+    card_bg = "rgba(255,255,255,0.7)"
+    card_border = "rgba(0,0,0,0.1)"
+    kpi_bg = "#ffffff"
+    text_primary = "#0f172a"
+    text_secondary = "#475569"
+    text_hero = "#0f172a"
+    text_subhero = "#334155"
+
+st.markdown(f"""
+<style>
+    /* Main background */
+    .stApp {{
+        background: {bg_main} !important;
+    }}
+    [data-testid="stSidebar"] {{
+        background: {bg_sidebar} !important;
+        border-right: 1px solid rgba(0,0,0,0.05) !important;
+    }}
+    /* Cards */
+    .glass-card {{
+        background: {card_bg} !important;
+        backdrop-filter: blur(10px) !important;
+        border-color: {card_border} !important;
+    }}
+    .kpi-card {{
+        background: {kpi_bg} !important;
+        border-color: {card_border} !important;
+    }}
+    /* Text colors */
+    .section-title, .page-title, .hero-title, .poster-title,
+    .kpi-value, .topnav-username, .sidebar-title {{
+        color: {text_primary} !important;
+    }}
+    .hero-subtitle, .page-subtitle, .kpi-label, .sidebar-footer,
+    .sidebar-quote, .metric-title, .hero-desc, .topnav-userrole {{
+        color: {text_secondary} !important;
+    }}
+    /* Navbar */
+    .topnav-user {{
+        background: rgba(255,255,255,0.08) !important;
+        border-color: {card_border} !important;
+    }}
+    .topnav-icon {{
+        background: rgba(255,255,255,0.06) !important;
+        border-color: {card_border} !important;
+        color: {text_primary} !important;
+    }}
+</style>
+""", unsafe_allow_html=True)
+
+# ==========================================================
 # SIDEBAR
 # ==========================================================
 
@@ -719,7 +787,7 @@ with st.sidebar:
     """, unsafe_allow_html=True)
 
     if SIDEBAR_IMAGE:
-        st.image(f"data:image/png;base64,{SIDEBAR_IMAGE}", width=250)   # ukuran diatur
+        st.image(f"data:image/png;base64,{SIDEBAR_IMAGE}", width=180)  # ukuran lebih kecil
 
     st.markdown("---")
 
@@ -746,28 +814,65 @@ with st.sidebar:
     """, unsafe_allow_html=True)
 
 # ==========================================================
-# TOP NAVBAR FUNCTION
+# TOP NAVBAR (with Share, Moon Toggle, and User profile)
 # ==========================================================
 
 def show_topnav():
     avatar_html = f'<img src="data:image/png;base64,{AVATAR_IMAGE}">' if AVATAR_IMAGE else "🧑‍🚀"
-    st.markdown(f"""
-    <div class="topnav">
-        <div class="topnav-icon">🌙</div>
-        <div class="topnav-icon">
-            🔔
-            <div class="topnav-badge">3</div>
-        </div>
-        <div class="topnav-user">
-            <div class="topnav-avatar">{avatar_html}</div>
-            <div>
-                <div class="topnav-username">Otaku User</div>
+    
+    # Tentukan ikon bulan sesuai mode
+    moon_icon = "☀️" if not st.session_state.dark_mode else "🌙"
+    
+    # Gunakan layout columns untuk menyusun: Share | Moon | User
+    col1, col2, col3 = st.columns([1, 0.2, 2.5], gap="small")
+    
+    with col1:
+        st.markdown('<div style="color:#94a3b8; font-size:14px; padding:8px 0; font-weight:500;">Share</div>', unsafe_allow_html=True)
+    
+    with col2:
+        # Tombol toggle tema
+        if st.button(moon_icon, key="theme_toggle", help="Toggle Dark/Light Theme", use_container_width=True):
+            st.session_state.dark_mode = not st.session_state.dark_mode
+            st.rerun()
+        # Styling tombol agar bulat dan transparan
+        st.markdown("""
+        <style>
+        div[data-testid="column"]:nth-of-type(2) button {
+            background: rgba(255,255,255,0.06) !important;
+            border: 1px solid rgba(255,255,255,0.08) !important;
+            border-radius: 50% !important;
+            width: 40px !important;
+            height: 40px !important;
+            font-size: 18px !important;
+            padding: 0 !important;
+            color: #e2e8f0 !important;
+            display: flex !important;
+            align-items: center !important;
+            justify-content: center !important;
+            min-width: 40px !important;
+        }
+        div[data-testid="column"]:nth-of-type(2) button:hover {
+            background: rgba(255,255,255,0.12) !important;
+        }
+        </style>
+        """, unsafe_allow_html=True)
+    
+    with col3:
+        st.markdown(f"""
+        <div style="display:flex; align-items:center; gap:10px; justify-content:flex-end;">
+            <div style="display:flex; align-items:center; gap:10px; background:rgba(255,255,255,0.04); border:1px solid rgba(255,255,255,0.08); padding:6px 14px 6px 6px; border-radius:999px;">
+                <div style="width:32px; height:32px; border-radius:50%; background:linear-gradient(135deg,#7c3aed,#ec4899); display:flex; align-items:center; justify-content:center; font-size:16px; overflow:hidden;">
+                    {avatar_html}
+                </div>
+                <div>
+                    <div style="font-size:14px; font-weight:600; color:white;">Otaku User</div>
+                </div>
+                <!-- dropdown arrow dihapus -->
             </div>
-            <span style="color:#64748b;">▾</span>
         </div>
-    </div>
-    """, unsafe_allow_html=True)
+        """, unsafe_allow_html=True)
 
+# Panggil navbar
 show_topnav()
 
 # ==========================================================
@@ -1030,7 +1135,6 @@ elif page == "Analytics":
 
     with right:
         st.markdown('<div class="section-title">🏆 Top Anime by Score</div>', unsafe_allow_html=True)
-        # --- OPSI 2: Menggunakan st.dataframe ---
         top10 = df_anime.sort_values("Score", ascending=False).head(10)[["Name", "Score", "Type", "Members"]]
         top10 = top10.reset_index(drop=True)
         top10.index = top10.index + 1
@@ -1501,7 +1605,7 @@ elif page == "Settings":
     st.markdown('<div class="section-title">🎨 Appearance</div>', unsafe_allow_html=True)
     a1,a2,a3 = st.columns(3)
     with a1:
-        st.selectbox("Theme Mode", ["Dark", "Light"], index=0)
+        st.selectbox("Theme Mode", ["Dark", "Light"], index=0 if st.session_state.dark_mode else 1)
     with a2:
         st.selectbox("Primary Color", ["Purple", "Blue", "Pink", "Green"], index=0)
     with a3:
