@@ -1,10 +1,5 @@
 # ==========================================================
-# ANIME INSIGHT AI
-# Full Dashboard - Streamlit (with fixed navbar)
-# ==========================================================
-
-# ==========================================================
-# IMPORT
+# ANIME INSIGHT AI - FULL DASHBOARD (FIXED)
 # ==========================================================
 
 import streamlit as st
@@ -17,10 +12,19 @@ from sklearn.metrics.pairwise import cosine_similarity
 import os
 import base64
 import gdown
+import textwrap
 
-# ==========================================================
-# PAGE CONFIG
-# ==========================================================
+# ---------- MONKEY-PATCH st.markdown untuk auto-dedent ----------
+_original_markdown = st.markdown
+
+def _patched_markdown(body, unsafe_allow_html=False, **kwargs):
+    if unsafe_allow_html and isinstance(body, str):
+        # Hilangkan indentasi berlebih agar Markdown tidak menganggapnya code block
+        body = textwrap.dedent(body)
+    return _original_markdown(body, unsafe_allow_html=unsafe_allow_html, **kwargs)
+
+st.markdown = _patched_markdown
+# --------------------------------------------------------------
 
 st.set_page_config(
     page_title="Anime Insight AI",
@@ -29,45 +33,23 @@ st.set_page_config(
     initial_sidebar_state="expanded"
 )
 
-# ==========================================================
-# SESSION STATE
-# ==========================================================
-
+# Session state
 if "page" not in st.session_state:
     st.session_state.page = "Overview"
-
 if "favorites" not in st.session_state:
     st.session_state.favorites = set()
-
 if "dark_mode" not in st.session_state:
     st.session_state.dark_mode = True
 
-PAGES = [
-    "Overview",
-    "Analytics",
-    "Anime Explorer",
-    "User Analytics",
-    "Recommendations",
-    "AI Insights",
-    "Favorites",
-    "Settings",
-]
-
+PAGES = ["Overview", "Analytics", "Anime Explorer", "User Analytics",
+         "Recommendations", "AI Insights", "Favorites", "Settings"]
 PAGE_ICONS = {
-    "Overview": "🏠",
-    "Analytics": "📊",
-    "Anime Explorer": "🌐",
-    "User Analytics": "👥",
-    "Recommendations": "🎯",
-    "AI Insights": "🧠",
-    "Favorites": "❤️",
-    "Settings": "⚙️",
+    "Overview": "🏠", "Analytics": "📊", "Anime Explorer": "🌐",
+    "User Analytics": "👥", "Recommendations": "🎯", "AI Insights": "🧠",
+    "Favorites": "❤️", "Settings": "⚙️"
 }
 
-# ==========================================================
-# HELPER
-# ==========================================================
-
+# Helper
 def get_base64(file_path):
     try:
         with open(file_path, "rb") as f:
@@ -86,10 +68,7 @@ def fmt_num(n):
         return f"{n/1_000:.1f}K"
     return f"{int(n):,}"
 
-# ==========================================================
-# LOAD DATA
-# ==========================================================
-
+# Load data
 @st.cache_data
 def load_data():
     if not os.path.exists("users-details-2023.csv"):
@@ -122,10 +101,7 @@ df_anime["Score"] = df_anime["Score"].replace("UNKNOWN", mean_score).astype(floa
 with st.spinner("Building Recommendation Engine..."):
     similarity_df = build_similarity(df_score, df_anime)
 
-# ==========================================================
-# BACKGROUND IMAGES
-# ==========================================================
-
+# Load images
 BG_IMAGE = ""
 for ext in ["jpg", "jpeg", "png", "webp"]:
     path = f"assets/anime_bg.{ext}"
@@ -147,10 +123,7 @@ for ext in ["jpg", "jpeg", "png", "webp"]:
         AVATAR_IMAGE = get_base64(path)
         break
 
-# ==========================================================
-# GLOBAL CSS
-# ==========================================================
-
+# ---- CSS GLOBAL ----
 st.markdown("""
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
@@ -161,7 +134,6 @@ footer {visibility: hidden;}
 header[data-testid="stHeader"] { background: transparent; }
 .block-container { padding-top: 1.5rem; padding-bottom: 2rem; }
 
-/* Sidebar */
 [data-testid="stSidebar"] {
     background: linear-gradient(180deg, #111827, #0f172a);
     border-right: 1px solid rgba(255,255,255,0.05);
@@ -187,7 +159,6 @@ header[data-testid="stHeader"] { background: transparent; }
 }
 [data-testid="stSidebar"] [role="radiogroup"] label:hover { background: rgba(255,255,255,0.06); }
 
-/* Glass card */
 .glass-card {
     background: rgba(255,255,255,0.05);
     backdrop-filter: blur(20px);
@@ -196,7 +167,6 @@ header[data-testid="stHeader"] { background: transparent; }
 }
 .glass-card h3 { margin-top:0; font-size:16px; }
 
-/* KPI card */
 .kpi-card {
     background: #131c31;
     border: 1px solid rgba(255,255,255,0.06);
@@ -211,12 +181,10 @@ header[data-testid="stHeader"] { background: transparent; }
 .kpi-delta.down { color:#f87171; }
 .kpi-delta.flat { color:#94a3b8; }
 
-/* Section titles */
 .section-title { font-size:22px; font-weight:700; color:white; margin-top:8px; margin-bottom:15px; display:flex; align-items:center; gap:8px; }
 .page-title { font-size:38px; font-weight:800; color:white; margin-bottom:2px; }
 .page-subtitle { color:#94a3b8; font-size:15px; margin-bottom:18px; }
 
-/* Hero */
 .hero-container { position:relative; overflow:hidden; border-radius:22px; height:280px; margin-bottom:26px; }
 .hero-container img { width:100%; height:280px; object-fit:cover; }
 .hero-overlay {
@@ -229,7 +197,6 @@ header[data-testid="stHeader"] { background: transparent; }
 .hero-subtitle { color:#e2e8f0; font-size:17px; margin-top:6px; }
 .hero-desc { color:#cbd5e1; font-size:13.5px; margin-top:10px; max-width:480px; }
 
-/* Poster card */
 .poster-card { background: rgba(255,255,255,0.05); border-radius:16px; padding:8px; transition:0.3s; position:relative; }
 .poster-card:hover { transform: translateY(-5px); }
 .poster-rank-badge {
@@ -245,7 +212,6 @@ header[data-testid="stHeader"] { background: transparent; }
 }
 .sim-text { color:#4ade80; font-size:12.5px; font-weight:600; margin-top:6px; }
 
-/* Pills */
 .pill { display:inline-block; padding:4px 12px; border-radius:999px; font-size:12.5px; font-weight:600; margin-right:6px; }
 .pill-purple { background:rgba(124,58,237,0.25); color:#c4b5fd; }
 .pill-pink { background:rgba(236,72,153,0.2); color:#f9a8d4; }
@@ -256,58 +222,39 @@ header[data-testid="stHeader"] { background: transparent; }
 </style>
 """, unsafe_allow_html=True)
 
-# ==========================================================
-# DYNAMIC THEME CSS
-# ==========================================================
-
+# ---- DYNAMIC THEME ----
 if st.session_state.dark_mode:
-    bg_main = "#0f172a"
-    bg_sidebar = "#111827"
-    card_bg = "rgba(255,255,255,0.05)"
-    card_border = "rgba(255,255,255,0.08)"
-    kpi_bg = "#131c31"
-    text_primary = "white"
-    text_secondary = "#94a3b8"
+    bg_main, bg_sidebar, card_bg, card_border, kpi_bg, text_primary, text_secondary = \
+        "#0f172a", "#111827", "rgba(255,255,255,0.05)", "rgba(255,255,255,0.08)", "#131c31", "white", "#94a3b8"
 else:
-    bg_main = "#f1f5f9"
-    bg_sidebar = "#e2e8f0"
-    card_bg = "rgba(255,255,255,0.7)"
-    card_border = "rgba(0,0,0,0.1)"
-    kpi_bg = "#ffffff"
-    text_primary = "#0f172a"
-    text_secondary = "#475569"
+    bg_main, bg_sidebar, card_bg, card_border, kpi_bg, text_primary, text_secondary = \
+        "#f1f5f9", "#e2e8f0", "rgba(255,255,255,0.7)", "rgba(0,0,0,0.1)", "#ffffff", "#0f172a", "#475569"
 
 st.markdown(f"""
 <style>
-    .stApp {{ background: {bg_main} !important; }}
-    [data-testid="stSidebar"] {{ background: {bg_sidebar} !important; border-right: 1px solid rgba(0,0,0,0.05) !important; }}
-    .glass-card {{ background: {card_bg} !important; backdrop-filter: blur(10px) !important; border-color: {card_border} !important; }}
-    .kpi-card {{ background: {kpi_bg} !important; border-color: {card_border} !important; }}
-    .section-title, .page-title, .hero-title, .poster-title,
-    .kpi-value, .topnav-username, .sidebar-title {{
-        color: {text_primary} !important;
-    }}
-    .hero-subtitle, .page-subtitle, .kpi-label, .sidebar-footer,
-    .sidebar-quote, .metric-title, .hero-desc, .topnav-userrole {{
-        color: {text_secondary} !important;
-    }}
-    /* Navbar user profile */
-    .topnav-user {{
-        background: rgba(255,255,255,0.08) !important;
-        border-color: {card_border} !important;
-    }}
-    .topnav-icon {{
-        background: rgba(255,255,255,0.06) !important;
-        border-color: {card_border} !important;
-        color: {text_primary} !important;
-    }}
+.stApp {{ background: {bg_main} !important; }}
+[data-testid="stSidebar"] {{ background: {bg_sidebar} !important; border-right: 1px solid rgba(0,0,0,0.05) !important; }}
+.glass-card {{ background: {card_bg} !important; backdrop-filter: blur(10px) !important; border-color: {card_border} !important; }}
+.kpi-card {{ background: {kpi_bg} !important; border-color: {card_border} !important; }}
+.section-title, .page-title, .hero-title, .poster-title, .kpi-value, .topnav-username, .sidebar-title {{
+    color: {text_primary} !important;
+}}
+.hero-subtitle, .page-subtitle, .kpi-label, .sidebar-footer, .sidebar-quote, .metric-title, .hero-desc, .topnav-userrole {{
+    color: {text_secondary} !important;
+}}
+.topnav-user {{
+    background: rgba(255,255,255,0.08) !important;
+    border-color: {card_border} !important;
+}}
+.topnav-icon {{
+    background: rgba(255,255,255,0.06) !important;
+    border-color: {card_border} !important;
+    color: {text_primary} !important;
+}}
 </style>
 """, unsafe_allow_html=True)
 
-# ==========================================================
-# SIDEBAR
-# ==========================================================
-
+# ---- SIDEBAR ----
 with st.sidebar:
     st.markdown("""
     <div class="sidebar-logo-row">
@@ -319,6 +266,9 @@ with st.sidebar:
 
     if SIDEBAR_IMAGE:
         st.image(f"data:image/png;base64,{SIDEBAR_IMAGE}", width=180)
+    else:
+        # Fallback jika gambar tidak ada
+        st.markdown('<div style="text-align:center; color:#64748b; font-size:13px;">🖼️ Sidebar Image</div>', unsafe_allow_html=True)
 
     st.markdown("---")
     page = st.radio(
@@ -343,26 +293,20 @@ with st.sidebar:
     </div>
     """, unsafe_allow_html=True)
 
-# ==========================================================
-# TOP NAVBAR (tanpa "Share", hanya bulan + user)
-# ==========================================================
-
+# ---- TOP NAVBAR (tanpa "Share", hanya tema + user) ----
 def show_topnav():
     avatar_html = f'<img src="data:image/png;base64,{AVATAR_IMAGE}">' if AVATAR_IMAGE else "🧑‍🚀"
     moon_icon = "☀️" if not st.session_state.dark_mode else "🌙"
 
-    # Kolom kiri kosong sebagai spacer, kolom kanan berisi tombol dan user
     col1, col2 = st.columns([6, 1.2])
     with col1:
         pass  # kosong
     with col2:
-        # Dua subkolom: tombol tema dan profil user
-        subcol1, subcol2 = st.columns([1, 3], gap="small")
-        with subcol1:
+        sub1, sub2 = st.columns([1, 3], gap="small")
+        with sub1:
             if st.button(moon_icon, key="theme_toggle", help="Toggle Dark/Light Theme", use_container_width=True):
                 st.session_state.dark_mode = not st.session_state.dark_mode
                 st.rerun()
-            # Styling tombol bulat
             st.markdown("""
             <style>
             div[data-testid="column"]:nth-of-type(2) div[data-testid="column"]:nth-of-type(1) button {
@@ -384,7 +328,7 @@ def show_topnav():
             }
             </style>
             """, unsafe_allow_html=True)
-        with subcol2:
+        with sub2:
             st.markdown(f"""
             <div style="display:flex; align-items:center; gap:10px; background:rgba(255,255,255,0.04); border:1px solid rgba(255,255,255,0.08); padding:6px 14px 6px 6px; border-radius:999px; margin-left:4px;">
                 <div style="width:32px; height:32px; border-radius:50%; background:linear-gradient(135deg,#7c3aed,#ec4899); display:flex; align-items:center; justify-content:center; font-size:16px; overflow:hidden;">
@@ -398,10 +342,7 @@ def show_topnav():
 
 show_topnav()
 
-# ==========================================================
-# HERO FUNCTION
-# ==========================================================
-
+# ---- HERO FUNCTION (diperbaiki) ----
 def show_banner(title, subtitle, description="", welcome=None, small=False):
     welcome_html = f'<div class="hero-welcome">{welcome}</div>' if welcome else ""
     desc_html = f'<div class="hero-desc">{description}</div>' if description else ""
@@ -441,10 +382,7 @@ def show_banner(title, subtitle, description="", welcome=None, small=False):
         </div>
         """, unsafe_allow_html=True)
 
-# ==========================================================
-# KPI FUNCTION
-# ==========================================================
-
+# ---- KPI ----
 KPI_COLORS = [
     ("#7c3aed", "rgba(124,58,237,0.25)"),
     ("#ec4899", "rgba(236,72,153,0.22)"),
@@ -473,10 +411,7 @@ def kpi_card(icon, label, value, delta=None, delta_dir="up", color_idx=0):
     unsafe_allow_html=True
     )
 
-# ==========================================================
-# PAGES (Overview, Analytics, etc.) - same as before
-# ==========================================================
-
+# ---- HALAMAN ----
 if page == "Overview":
     show_banner(
         "Anime Insight AI",
@@ -616,10 +551,7 @@ if page == "Overview":
     with insight3:
         st.markdown('<div class="glass-card"><h3>🚀 Recommendation Ready</h3>Similarity engine loaded and ready for recommendation.</div>', unsafe_allow_html=True)
 
-# ==========================================================
-# PAGE: ANALYTICS
-# ==========================================================
-
+# ---- PAGE ANALYTICS ----
 elif page == "Analytics":
     show_banner("Analytics", "Discover meaningful insights from anime data", small=True)
 
@@ -733,10 +665,7 @@ elif page == "Analytics":
             """, unsafe_allow_html=True)
             st.markdown('</div>', unsafe_allow_html=True)
 
-# ==========================================================
-# PAGE: ANIME EXPLORER (shortened for brevity - same as original)
-# ==========================================================
-
+# ---- PAGE ANIME EXPLORER ----
 elif page == "Anime Explorer":
     show_banner("Anime Explorer 🌐", "Discover and explore anime from our comprehensive database", small=True)
     anime_name_list_explorer = sorted(df_anime["Name"].dropna().unique())
@@ -826,10 +755,7 @@ elif page == "Anime Explorer":
     st.markdown('<div class="section-title">📋 Anime Catalog</div>', unsafe_allow_html=True)
     st.dataframe(filtered[["Name", "Genres", "Score", "Type", "Members"]], use_container_width=True, height=500)
 
-# ==========================================================
-# PAGE: USER ANALYTICS
-# ==========================================================
-
+# ---- PAGE USER ANALYTICS ----
 elif page == "User Analytics":
     show_banner("User Analytics 👥", "Deep insights into user behavior and preferences", small=True)
 
@@ -900,10 +826,7 @@ elif page == "User Analytics":
     top_users_tbl.insert(0, "Rank", range(1, len(top_users_tbl)+1))
     st.dataframe(top_users_tbl, use_container_width=True, hide_index=True)
 
-# ==========================================================
-# PAGE: RECOMMENDATIONS
-# ==========================================================
-
+# ---- PAGE RECOMMENDATIONS ----
 elif page == "Recommendations":
     show_banner("Recommendations 🎯", "Personalized anime recommendations just for you", small=True)
 
@@ -976,10 +899,7 @@ elif page == "Recommendations":
         else:
             st.warning("This anime does not have enough rating data for recommendations.")
 
-# ==========================================================
-# PAGE: AI INSIGHTS
-# ==========================================================
-
+# ---- PAGE AI INSIGHTS ----
 elif page == "AI Insights":
     show_banner("AI Insights 🧠", "AI-powered insights and analysis from anime data", small=True)
 
@@ -1065,10 +985,7 @@ elif page == "AI Insights":
     with i3:
         st.markdown('<div class="glass-card"><h3>🚀 Recommendation Ready</h3>AI engine successfully identifies similar anime preferences.</div>', unsafe_allow_html=True)
 
-# ==========================================================
-# PAGE: FAVORITES
-# ==========================================================
-
+# ---- PAGE FAVORITES ----
 elif page == "Favorites":
     show_banner("Favorites ❤️", "Anime you have saved for later", small=True)
 
@@ -1104,10 +1021,7 @@ elif page == "Favorites":
                         st.rerun()
                     st.markdown('</div>', unsafe_allow_html=True)
 
-# ==========================================================
-# PAGE: SETTINGS
-# ==========================================================
-
+# ---- PAGE SETTINGS ----
 elif page == "Settings":
     show_banner("⚙️ Settings", "Customize your dashboard experience", small=True)
 
@@ -1164,10 +1078,7 @@ elif page == "Settings":
         st.session_state.favorites = set()
         st.success("Settings have been reset.")
 
-# ==========================================================
-# FOOTER
-# ==========================================================
-
+# ---- FOOTER ----
 st.markdown("<br><br>", unsafe_allow_html=True)
 st.markdown(
 """
